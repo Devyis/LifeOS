@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LifeOS · Personal</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#161a2b;--mut:#6b7280;--bd:#e5e7eb;--ac:#10b981;--red:#dc2626;--amb:#d97706}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1220;--card:#181c30;--tx:#eef0fa;--mut:#9aa1b8;--bd:#2a3050}}
+:root[data-theme="dark"]{--bg:#0f1220;--card:#181c30;--tx:#eef0fa;--mut:#9aa1b8;--bd:#2a3050}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,sans-serif;padding:max(16px,env(safe-area-inset-top)) 14px max(24px,env(safe-area-inset-bottom))}
+main{max-width:720px;margin:0 auto}
+a{color:inherit}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+h1{margin:0;font-size:22px}h3{margin:18px 0 8px;font-size:14px;color:var(--mut);font-weight:600}
+.btn{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
+.btn.p{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px}
+.row{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.row .t{flex:1;min-width:0}.row b{display:block}.row small{color:var(--mut)}
+.row.red{border-left:4px solid var(--red)}.row.amb{border-left:4px solid var(--amb)}.row.ok{border-left:4px solid var(--bd)}
+.chk{width:26px;height:26px;border-radius:50%;border:2px solid var(--bd);background:none;cursor:pointer;color:var(--ac);font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.area{cursor:pointer;border-top:4px solid var(--c)}.area .i{font-size:24px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stats b{font-size:20px;display:block}
+.empty{color:var(--mut);padding:14px;text-align:center}
+dialog{border:1px solid var(--bd);border-radius:16px;background:var(--card);color:var(--tx);width:min(440px,92vw);padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}
+input,select,textarea{width:100%;padding:9px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx);font:inherit}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.x{color:var(--mut);background:none;border:0;cursor:pointer;font-size:18px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<dialog id="dlg"></dialog>
+<script>
+const URL_='https://ebtehnbffwobpdnmftod.supabase.co', KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVidGVobmJmZndvYnBkbm1mdG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODM1NzQsImV4cCI6MjA5NTA1OTU3NH0.hzkHQ88Q_GJjH9BZJXkXOj2M3NLP8Sms-QId0jt2N3Y';
+const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:'return=representation'};
+const api=async(p,o={})=>{const r=await fetch(URL_+'/rest/v1/'+p,{headers:H,...o});if(!r.ok)throw new Error(await r.text());return r.status===204?null:r.json()};
+const DEF=[['Salud','🩺','#ef4444'],['Hogar','🏠','#3b82f6'],['Finanzas','💳','#10b981'],['Trámites','📄','#f59e0b'],['Familia y social','👨‍👩‍👧','#8b5cf6']];
+const CATS=['cita','pago','trámite','compromiso','otro'];
+let user,areas=[],items=[],view=null;
+try{const t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}
+try{user=JSON.parse(localStorage.getItem('personal_user'))}catch(e){}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const days=f=>{const[y,m,d]=f.split('-').map(Number);const a=new Date(y,m-1,d),n=new Date();n.setHours(0,0,0,0);return Math.round((a-n)/864e5)};
+function score(i){const d=days(i.fecha);const u=d<=0?10:d<=2?8:d<=7?5:d<=30?3:1;return u*2+i.importancia*2+i.esfuerzo}
+function sort(l){return [...l].sort((a,b)=>{const da=days(a.fecha),db=days(b.fecha);if(da<0||db<0){if(da<0&&db<0)return da-db;return da<0?-1:1}return score(b)-score(a)||da-db})}
+function why(i){const d=days(i.fecha);const w=d<0?'Vencido hace '+(-d)+(d==-1?' día':' días'):d==0?'Vence hoy':d==1?'Vence mañana':'En '+d+' días';return w+' · importancia '+['','baja','media','alta'][i.importancia]}
+function next(f,r){const[y,m,d]=f.split('-').map(Number);if(r==='semanal')return iso(new Date(y,m-1,d+7));const ty=r==='anual'?y+1:y,tm=r==='anual'?m-1:m;const last=new Date(ty,tm+1,0).getDate();return iso(new Date(ty,tm,Math.min(d,last)))}
+async function load(){
+  const u=encodeURIComponent(user.username);
+  areas=await api('personal_areas?username=eq.'+u+'&order=orden');
+  if(!areas.length){areas=await api('personal_areas',{method:'POST',body:JSON.stringify(DEF.map((a,i)=>({username:user.username,nombre:a[0],icono:a[1],color:a[2],orden:i})))})}
+  items=await api('personal_items?username=eq.'+u+'&order=fecha');
+}
+function row(i){const a=areas.find(x=>x.id===i.area_id)||{};const d=days(i.fecha);const c=d<0?'red':d<=2?'amb':'ok';
+  return `<div class="card row ${c}"><button class="chk" title="Marcar como hecha" onclick="done(${i.id})">✓</button><div class="t"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')} · ${i.categoria} · ${why(i)}${i.monto?' · S/ '+Number(i.monto).toFixed(2):''}${i.repite!=='no'?' · ↻ '+i.repite:''}</small></div><button class="x" title="Eliminar" onclick="del(${i.id})">🗑</button></div>`}
+function render(){
+  if(!user||!user.username){$('#app').innerHTML='<div class="card empty">Inicia sesión primero en <a href="estudio">Estudio</a> y vuelve aquí.<br><br><a class="btn" href="./">← Inicio</a></div>';return}
+  const pend=items.filter(i=>!i.hecho);
+  if(view){const a=areas.find(x=>x.id===view);const l=sort(pend.filter(i=>i.area_id===view));
+    $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Personal</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><h1>${a.icono} ${esc(a.nombre)}</h1><h3>Pendientes (${l.length})</h3>${l.map(row).join('')||'<div class="card empty">Nada pendiente aquí.</div>'}`;return}
+  const top=sort(pend).slice(0,3);const now=new Date();const ym=iso(now).slice(0,7);
+  const porPagar=pend.filter(i=>i.monto&&i.fecha.startsWith(ym)).reduce((s,i)=>s+Number(i.monto),0);
+  const hechasMes=items.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)).length;
+  $('#app').innerHTML=`<div class="top"><div><a href="./" style="font-size:13px;color:var(--mut)">← Inicio</a><h1>Personal</h1></div><button class="btn p" onclick="openForm()">+ Nueva</button></div>
+  <h3>Qué hacer primero</h3>${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}
+  <h3>Tus áreas</h3><div class="grid">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><b>${esc(a.nombre)}</b><br><small style="color:var(--mut)">${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div>`).join('')}</div>
+  <h3>Resumen del mes</h3><div class="stats"><div class="card"><b>S/ ${porPagar.toFixed(2)}</b><small style="color:var(--mut)">por pagar este mes</small></div><div class="card"><b>${hechasMes}</b><small style="color:var(--mut)">actividades cumplidas</small></div></div>`}
+function openForm(aid){const d=$('#dlg');
+  d.innerHTML=`<div class="top"><b>Nueva actividad</b><button class="x" onclick="$('#dlg').close()">✕</button></div>
+  <label>Título</label><input id="f-t" placeholder="Pagar recibo de agua">
+  <div class="two"><div><label>Área</label><select id="f-a">${areas.map(a=>`<option value="${a.id}" ${a.id===aid?'selected':''}>${a.icono} ${esc(a.nombre)}</option>`).join('')}</select></div><div><label>Categoría</label><select id="f-c">${CATS.map(c=>`<option>${c}</option>`).join('')}</select></div></div>
+  <div class="two"><div><label>Fecha límite</label><input id="f-f" type="date" value="${iso(new Date())}"></div><div><label>Hora</label><input id="f-h" type="time"></div></div>
+  <div class="two"><div><label>Importancia</label><select id="f-i"><option value="1">Baja</option><option value="2" selected>Media</option><option value="3">Alta</option></select></div><div><label>Esfuerzo</label><select id="f-e"><option value="1">Poco</option><option value="2" selected>Medio</option><option value="3">Mucho</option></select></div></div>
+  <div class="two"><div><label>Monto (S/)</label><input id="f-m" type="number" step="0.01" min="0"></div><div><label>Se repite</label><select id="f-r"><option value="no">No</option><option value="semanal">Semanal</option><option value="mensual">Mensual</option><option value="anual">Anual</option></select></div></div>
+  <label>Notas</label><textarea id="f-n" rows="2"></textarea>
+  <p id="f-err" style="color:var(--red);font-size:13px;margin:8px 0 0"></p>
+  <button class="btn p" style="width:100%;margin-top:10px" onclick="save()">Guardar actividad</button>`;d.showModal()}
+async function save(){const t=$('#f-t').value.trim(),f=$('#f-f').value;if(!t||!f){$('#f-err').textContent='Escribe un título y una fecha.';return}
+  const m=$('#f-m').value;
+  try{const r=await api('personal_items',{method:'POST',body:JSON.stringify({username:user.username,area_id:+$('#f-a').value,titulo:t,categoria:$('#f-c').value,fecha:f,hora:$('#f-h').value||null,importancia:+$('#f-i').value,esfuerzo:+$('#f-e').value,monto:m?+m:null,repite:$('#f-r').value,notas:$('#f-n').value})});
+    items.push(...r);$('#dlg').close();render()}catch(e){$('#f-err').textContent='No se pudo guardar. Intenta de nuevo.'}}
+async function done(id){const i=items.find(x=>x.id===id);if(!i)return;
+  try{await api('personal_items?id=eq.'+id,{method:'PATCH',body:JSON.stringify({hecho:true,hecho_en:new Date().toISOString()})});i.hecho=true;i.hecho_en=new Date().toISOString();
+    if(i.repite!=='no'){const r=await api('personal_items',{method:'POST',body:JSON.stringify({username:i.username,area_id:i.area_id,titulo:i.titulo,categoria:i.categoria,fecha:next(i.fecha,i.repite),hora:i.hora,importancia:i.importancia,esfuerzo:i.esfuerzo,monto:i.monto,repite:i.repite,notas:i.notas})});items.push(...r)}
+    render()}catch(e){alert('No se pudo actualizar.')}}
+async function del(id){if(!confirm('¿Eliminar esta actividad?'))return;try{await api('personal_items?id=eq.'+id,{method:'DELETE'});items=items.filter(x=>x.id!==id);render()}catch(e){alert('No se pudo eliminar.')}}
+(async()=>{if(!user||!user.username){render();return}$('#app').innerHTML='<div class="empty">Cargando…</div>';try{await load();render()}catch(e){$('#app').innerHTML='<div class="card empty">No se pudo conectar con la base de datos.</div>'}})();
+</script>
+</body>
+</html>
