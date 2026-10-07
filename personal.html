@@ -54,7 +54,7 @@ const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const days=f=>{const[y,m,d]=f.split('-').map(Number);const a=new Date(y,m-1,d),n=new Date();n.setHours(0,0,0,0);return Math.round((a-n)/864e5)};
 function score(i){const d=days(i.fecha);const u=d<=0?10:d<=2?8:d<=7?5:d<=30?3:1;return u*2+i.importancia*2+i.esfuerzo}
 function sort(l){return [...l].sort((a,b)=>{const da=days(a.fecha),db=days(b.fecha);if(da<0||db<0){if(da<0&&db<0)return da-db;return da<0?-1:1}return score(b)-score(a)||da-db})}
-function why(i){const d=days(i.fecha);const w=d<0?'Vencido hace '+(-d)+(d==-1?' día':' días'):d==0?'Vence hoy':d==1?'Vence mañana':'En '+d+' días';return w+' · importancia '+['','baja','media','alta'][i.importancia]}
+function why(i){const d=days(i.fecha);const h=i.hora?' a las '+String(i.hora).slice(0,5):(d<=1&&d>=0?' · todo el día':'');const w=d<0?'Vencido hace '+(-d)+(d==-1?' día':' días'):d==0?'Vence hoy'+h:d==1?'Vence mañana'+h:'En '+d+' días'+h;return w+' · importancia '+['','baja','media','alta'][i.importancia]}
 function next(f,r){const[y,m,d]=f.split('-').map(Number);if(r==='semanal')return iso(new Date(y,m-1,d+7));const ty=r==='anual'?y+1:y,tm=r==='anual'?m-1:m;const last=new Date(ty,tm+1,0).getDate();return iso(new Date(ty,tm,Math.min(d,last)))}
 async function load(){
   const u=encodeURIComponent(user.username);
