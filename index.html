@@ -21,6 +21,13 @@ a.card:hover{transform:translateY(-3px)}
 .card p{margin:0;color:var(--mut);font-size:14px;line-height:1.4}
 .tag{display:inline-block;margin-top:12px;font-size:12px;padding:3px 10px;border-radius:99px;background:var(--bg);color:var(--mut)}
 .soon{opacity:.75}
+
+.auth{margin-top:22px;background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:20px;max-width:420px}
+.auth h3{margin:0 0 12px;font-size:17px}
+.auth input{width:100%;padding:10px;margin-bottom:8px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
+.auth button{width:100%;padding:11px;border:0;border-radius:10px;background:#6366f1;color:#fff;font:600 15px system-ui;cursor:pointer}
+.auth .lnk{background:none;color:var(--mut);font:14px system-ui;margin-top:8px;text-decoration:underline}
+.auth .err{color:#dc2626;font-size:13px;min-height:18px;margin:2px 0}
 </style>
 </head>
 <body>
@@ -38,23 +45,65 @@ a.card:hover{transform:translateY(-3px)}
       <p>Entregables, reuniones y proyectos con su fecha y hora límite.</p>
       <span class="tag">Próximamente</span>
     </a>
-    <a class="card soon" style="--c:#10b981" href="personal">
+    <a class="card" style="--c:#10b981" href="personal">
       <div class="ic">🏡</div><h2>Vida personal</h2>
       <p>Trámites, pagos, citas y compromisos del día a día.</p>
-      <span class="tag">Próximamente</span>
+      <span class="tag">Disponible</span>
     </a>
   </div>
+  <div class="auth" id="auth"></div>
 </main>
 <script>
 try{
   var t=localStorage.getItem('theme');
   if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);
 }catch(e){}
-try{
-  var u=JSON.parse(localStorage.getItem('personal_user'));
-  var n=u&&(u.displayName||u.name||u.username);
-  if(n)document.getElementById('hi').textContent='Hola, '+n;
-}catch(e){}
+</script>
+<script>
+const SB='https://ebtehnbffwobpdnmftod.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVidGVobmJmZndvYnBkbm1mdG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODM1NzQsImV4cCI6MjA5NTA1OTU3NH0.hzkHQ88Q_GJjH9BZJXkXOj2M3NLP8Sms-QId0jt2N3Y';
+const HD={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
+let mode='login';
+function getUser(){try{return JSON.parse(localStorage.getItem('personal_user'))}catch(e){return null}}
+function setErr(m){document.getElementById('au-err').textContent=m||''}
+function drawAuth(){
+  const u=getUser(),box=document.getElementById('auth');
+  document.getElementById('hi').textContent=u&&(u.displayName||u.username)?'Hola, '+(u.displayName||u.username):'LifeOS';
+  if(u&&u.username){box.innerHTML='<h3>Sesión iniciada</h3><p style="margin:0 0 12px;color:var(--mut)">Entraste como <b>'+(u.displayName||u.username).replace(/</g,'&lt;')+'</b>. Tu sesión sirve en todas las áreas.</p><button onclick="logout()">Cerrar sesión</button>';return}
+  const reg=mode==='register';
+  box.innerHTML='<h3>'+(reg?'Crear cuenta':'Iniciar sesión')+'</h3>'+
+   (reg?'<input id="au-name" placeholder="Tu nombre" autocomplete="name">':'')+
+   '<input id="au-user" placeholder="Usuario" autocomplete="username" autocapitalize="none">'+
+   '<input id="au-pass" type="password" placeholder="Contraseña" autocomplete="'+(reg?'new-password':'current-password')+'">'+
+   '<div class="err" id="au-err"></div>'+
+   '<button onclick="'+(reg?'register()':'login()')+'">'+(reg?'Crear cuenta':'Entrar')+'</button>'+
+   '<button class="lnk" onclick="mode=\''+(reg?'login':'register')+'\';drawAuth()">'+(reg?'Ya tengo cuenta':'Crear una cuenta nueva')+'</button>';
+}
+function save(u,name,avatar){localStorage.setItem('personal_user',JSON.stringify({username:u,displayName:name,avatarUrl:avatar||''}));drawAuth()}
+async function login(){
+  const u=document.getElementById('au-user').value.trim().toLowerCase(),p=document.getElementById('au-pass').value;
+  if(!u||!p){setErr('Completa todos los campos');return}
+  try{
+    const r=await fetch(SB+'/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&password=eq.'+encodeURIComponent(p)+'&select=username,display_name,avatar_url',{headers:HD});
+    const rows=await r.json();
+    if(!rows.length){setErr('Usuario o contraseña incorrectos');return}
+    save(rows[0].username,rows[0].display_name,rows[0].avatar_url);
+  }catch(e){setErr('No se pudo conectar. Intenta de nuevo')}
+}
+async function register(){
+  const n=document.getElementById('au-name').value.trim(),u=document.getElementById('au-user').value.trim().toLowerCase(),p=document.getElementById('au-pass').value;
+  if(!n||!u||!p){setErr('Completa todos los campos');return}
+  if(u.length<3){setErr('El usuario debe tener al menos 3 caracteres');return}
+  if(p.length<4){setErr('La contraseña debe tener al menos 4 caracteres');return}
+  try{
+    const c=await fetch(SB+'/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=username',{headers:HD});
+    if((await c.json()).length){setErr('Ese usuario ya existe');return}
+    const r=await fetch(SB+'/rest/v1/users',{method:'POST',headers:{...HD,Prefer:'return=representation'},body:JSON.stringify({username:u,password:p,display_name:n})});
+    if(!r.ok)throw 0;
+    save(u,n,'');
+  }catch(e){setErr('No se pudo crear la cuenta')}
+}
+function logout(){localStorage.removeItem('personal_user');mode='login';drawAuth()}
+drawAuth();
 </script>
 </body>
 </html>
