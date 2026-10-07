@@ -87,7 +87,7 @@ function chip(i){const d=days(i.fecha),h=i.hora?String(i.hora).slice(0,5):'';con
   return `<div class="chip ${cl}"><span class="a">${a}</span><span class="h${bs?' s':''}">${b}</span><span class="f">${f}</span></div>`}
 function row(i){const a=areas.find(x=>x.id===i.area_id)||{};
   const pills=(i.monto?`<span class="pl pm">S/ ${Number(i.monto).toFixed(2)}</span>`:'')+(i.repite!=='no'?`<span class="pl pg">↻ ${i.repite}</span>`:'');
-  return `<div class="card row"><button class="chk" title="Marcar como hecha" onclick="done(${i.id})">✓</button><div class="t"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')} · ${i.categoria} · importancia ${['','baja','media','alta'][i.importancia]}</small>${pills?'<div>'+pills+'</div>':''}</div>${chip(i)}<button class="x" title="Eliminar" onclick="del(${i.id})">🗑</button></div>`}
+  return `<div class="card row"><button class="chk" title="Marcar como hecha" onclick="done(${i.id})">✓</button><div class="t"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')} · ${i.categoria} · importancia ${['','baja','media','alta'][i.importancia]}</small>${pills?'<div>'+pills+'</div>':''}</div>${chip(i)}<button class="x" title="Editar" onclick="edit(${i.id})">✏️</button><button class="x" title="Eliminar" onclick="del(${i.id})">🗑</button></div>`}
 function render(){
   if(!user||!user.username){$('#app').innerHTML='<div class="card empty">Inicia sesión primero en <a href="estudio">Estudio</a> y vuelve aquí.<br><br><a class="btn back" href="./">← Volver al menú</a></div>';return}
   const pend=items.filter(i=>!i.hecho);
@@ -100,20 +100,26 @@ function render(){
   <h3>Qué hacer primero</h3>${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}
   <h3>Tus áreas</h3><div class="grid">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><b>${esc(a.nombre)}</b><br><small style="color:var(--mut)">${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div>`).join('')}</div>
   <h3>Resumen del mes</h3><div class="stats"><div class="card"><b>S/ ${porPagar.toFixed(2)}</b><small style="color:var(--mut)">por pagar este mes</small></div><div class="card"><b>${hechasMes}</b><small style="color:var(--mut)">actividades cumplidas</small></div></div>`}
-function openForm(aid){const d=$('#dlg');
-  d.innerHTML=`<div class="top"><b>Nueva actividad</b><button class="x" onclick="$('#dlg').close()">✕</button></div>
-  <label>Título</label><input id="f-t" placeholder="Pagar recibo de agua">
-  <div class="two"><div><label>Área</label><select id="f-a">${areas.map(a=>`<option value="${a.id}" ${a.id===aid?'selected':''}>${a.icono} ${esc(a.nombre)}</option>`).join('')}</select></div><div><label>Categoría</label><select id="f-c">${CATS.map(c=>`<option>${c}</option>`).join('')}</select></div></div>
-  <div class="two"><div><label>Fecha límite</label><input id="f-f" type="date" value="${iso(new Date())}"></div><div><label>Hora</label><input id="f-h" type="time"></div></div>
-  <div class="two"><div><label>Importancia</label><select id="f-i"><option value="1">Baja</option><option value="2" selected>Media</option><option value="3">Alta</option></select></div><div><label>Esfuerzo</label><select id="f-e"><option value="1">Poco</option><option value="2" selected>Medio</option><option value="3">Mucho</option></select></div></div>
-  <div class="two"><div><label>Monto (S/)</label><input id="f-m" type="number" step="0.01" min="0"></div><div><label>Se repite</label><select id="f-r"><option value="no">No</option><option value="semanal">Semanal</option><option value="mensual">Mensual</option><option value="anual">Anual</option></select></div></div>
-  <label>Notas</label><textarea id="f-n" rows="2"></textarea>
+let editId=null;
+function edit(id){const it=items.find(x=>x.id===id);if(it)openForm(null,it)}
+function openForm(aid,it){editId=it?it.id:null;const v=it||{};const d=$('#dlg');
+  const sel=(a,b)=>String(a)===String(b)?'selected':'';
+  d.innerHTML=`<div class="top"><b>${it?'Editar actividad':'Nueva actividad'}</b><button class="x" onclick="$('#dlg').close()">✕</button></div>
+  <label>Título</label><input id="f-t" placeholder="Pagar recibo de agua" value="${esc(v.titulo||'')}">
+  <div class="two"><div><label>Área</label><select id="f-a">${areas.map(a=>`<option value="${a.id}" ${sel(a.id,it?it.area_id:aid)}>${a.icono} ${esc(a.nombre)}</option>`).join('')}</select></div><div><label>Categoría</label><select id="f-c">${CATS.map(c=>`<option ${sel(c,v.categoria)}>${c}</option>`).join('')}</select></div></div>
+  <div class="two"><div><label>Fecha límite</label><input id="f-f" type="date" value="${v.fecha||iso(new Date())}"></div><div><label>Hora (opcional)</label><input id="f-h" type="time" value="${v.hora?String(v.hora).slice(0,5):''}"></div></div>
+  <div class="two"><div><label>Importancia</label><select id="f-i"><option value="1" ${sel(1,v.importancia)}>Baja</option><option value="2" ${sel(2,v.importancia||2)}>Media</option><option value="3" ${sel(3,v.importancia)}>Alta</option></select></div><div><label>Esfuerzo</label><select id="f-e"><option value="1" ${sel(1,v.esfuerzo)}>Poco</option><option value="2" ${sel(2,v.esfuerzo||2)}>Medio</option><option value="3" ${sel(3,v.esfuerzo)}>Mucho</option></select></div></div>
+  <div class="two"><div><label>Monto (S/)</label><input id="f-m" type="number" step="0.01" min="0" value="${v.monto??''}"></div><div><label>Se repite</label><select id="f-r">${['no','semanal','mensual','anual'].map(r=>`<option value="${r}" ${sel(r,v.repite||'no')}>${r==='no'?'No':r[0].toUpperCase()+r.slice(1)}</option>`).join('')}</select></div></div>
+  <label>Notas</label><textarea id="f-n" rows="2">${esc(v.notas||'')}</textarea>
   <p id="f-err" style="color:var(--red);font-size:13px;margin:8px 0 0"></p>
-  <button class="btn p" style="width:100%;margin-top:10px" onclick="save()">Guardar actividad</button>`;d.showModal()}
+  <button class="btn p" style="width:100%;margin-top:10px" onclick="save()">${it?'Guardar cambios':'Guardar actividad'}</button>`;d.showModal()}
 async function save(){const t=$('#f-t').value.trim(),f=$('#f-f').value;if(!t||!f){$('#f-err').textContent='Escribe un título y una fecha.';return}
   const m=$('#f-m').value;
-  try{const r=await api('personal_items',{method:'POST',body:JSON.stringify({username:user.username,area_id:+$('#f-a').value,titulo:t,categoria:$('#f-c').value,fecha:f,hora:$('#f-h').value||null,importancia:+$('#f-i').value,esfuerzo:+$('#f-e').value,monto:m?+m:null,repite:$('#f-r').value,notas:$('#f-n').value})});
-    items.push(...r);$('#dlg').close();render()}catch(e){$('#f-err').textContent='No se pudo guardar. Intenta de nuevo.'}}
+  const body={area_id:+$('#f-a').value,titulo:t,categoria:$('#f-c').value,fecha:f,hora:$('#f-h').value||null,importancia:+$('#f-i').value,esfuerzo:+$('#f-e').value,monto:m?+m:null,repite:$('#f-r').value,notas:$('#f-n').value};
+  try{
+    if(editId){const r=await api('personal_items?id=eq.'+editId,{method:'PATCH',body:JSON.stringify(body)});const k=items.findIndex(x=>x.id===editId);if(k>=0&&r[0])items[k]=r[0]}
+    else{const r=await api('personal_items',{method:'POST',body:JSON.stringify({username:user.username,...body})});items.push(...r)}
+    $('#dlg').close();render()}catch(e){$('#f-err').textContent='No se pudo guardar. Intenta de nuevo.'}}
 async function done(id){const i=items.find(x=>x.id===id);if(!i)return;
   try{await api('personal_items?id=eq.'+id,{method:'PATCH',body:JSON.stringify({hecho:true,hecho_en:new Date().toISOString()})});i.hecho=true;i.hecho_en=new Date().toISOString();
     if(i.repite!=='no'){const r=await api('personal_items',{method:'POST',body:JSON.stringify({username:i.username,area_id:i.area_id,titulo:i.titulo,categoria:i.categoria,fecha:next(i.fecha,i.repite),hora:i.hora,importancia:i.importancia,esfuerzo:i.esfuerzo,monto:i.monto,repite:i.repite,notas:i.notas})});items.push(...r)}
