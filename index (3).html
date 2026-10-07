@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LifeOS</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#161a2b;--mut:#6b7280;--bd:#e5e7eb}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1220;--card:#181c30;--tx:#eef0fa;--mut:#9aa1b8;--bd:#2a3050}}
+:root[data-theme="dark"]{--bg:#0f1220;--card:#181c30;--tx:#eef0fa;--mut:#9aa1b8;--bd:#2a3050}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh;padding:max(24px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom))}
+main{max-width:760px;margin:0 auto}
+h1{margin:0;font-size:28px}
+.sub{color:var(--mut);margin:6px 0 24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+a.card{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:22px;border-top:5px solid var(--c);transition:transform .15s}
+a.card:hover{transform:translateY(-3px)}
+.ic{font-size:34px}
+.card h2{margin:10px 0 4px;font-size:20px}
+.card p{margin:0;color:var(--mut);font-size:14px;line-height:1.4}
+.tag{display:inline-block;margin-top:12px;font-size:12px;padding:3px 10px;border-radius:99px;background:var(--bg);color:var(--mut)}
+.soon{opacity:.75}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="hi">LifeOS</h1>
+  <p class="sub">Elige un área para ver tus pendientes y saber qué hacer primero.</p>
+  <div class="grid">
+    <a class="card" style="--c:#6366f1" href="estudio.html">
+      <div class="ic">📚</div><h2>Estudio</h2>
+      <p>Tareas, exposiciones y exámenes de tus cursos, con modo estudio e IA.</p>
+      <span class="tag">Disponible</span>
+    </a>
+    <a class="card soon" style="--c:#f59e0b" href="trabajo.html">
+      <div class="ic">💼</div><h2>Trabajo</h2>
+      <p>Entregables, reuniones y proyectos con su fecha y hora límite.</p>
+      <span class="tag">Próximamente</span>
+    </a>
+    <a class="card soon" style="--c:#10b981" href="personal.html">
+      <div class="ic">🏡</div><h2>Vida personal</h2>
+      <p>Trámites, pagos, citas y compromisos del día a día.</p>
+      <span class="tag">Próximamente</span>
+    </a>
+  </div>
+</main>
+<script>
+try{
+  var t=localStorage.getItem('theme');
+  if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);
+}catch(e){}
+try{
+  var u=JSON.parse(localStorage.getItem('personal_user'));
+  var n=u&&(u.displayName||u.name||u.username);
+  if(n)document.getElementById('hi').textContent='Hola, '+n;
+}catch(e){}
+</script>
+</body>
+</html>
