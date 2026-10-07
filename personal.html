@@ -15,6 +15,8 @@ a{color:inherit}
 .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 h1{margin:0;font-size:22px}h3{margin:18px 0 8px;font-size:14px;color:var(--mut);font-weight:600}
 .btn{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
+a.btn{text-decoration:none;display:inline-block}
+.btn.back{background:#10b981;border-color:#10b981;color:#fff;font-weight:700;box-shadow:0 2px 8px rgba(16,185,129,.35)}
 .btn.p{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px}
 .row{display:flex;gap:10px;align-items:center;margin-bottom:8px}
@@ -63,14 +65,14 @@ async function load(){
 function row(i){const a=areas.find(x=>x.id===i.area_id)||{};const d=days(i.fecha);const c=d<0?'red':d<=2?'amb':'ok';
   return `<div class="card row ${c}"><button class="chk" title="Marcar como hecha" onclick="done(${i.id})">✓</button><div class="t"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')} · ${i.categoria} · ${why(i)}${i.monto?' · S/ '+Number(i.monto).toFixed(2):''}${i.repite!=='no'?' · ↻ '+i.repite:''}</small></div><button class="x" title="Eliminar" onclick="del(${i.id})">🗑</button></div>`}
 function render(){
-  if(!user||!user.username){$('#app').innerHTML='<div class="card empty">Inicia sesión primero en <a href="estudio">Estudio</a> y vuelve aquí.<br><br><a class="btn" href="./">← Inicio</a></div>';return}
+  if(!user||!user.username){$('#app').innerHTML='<div class="card empty">Inicia sesión primero en <a href="estudio">Estudio</a> y vuelve aquí.<br><br><a class="btn back" href="./">← Volver al menú</a></div>';return}
   const pend=items.filter(i=>!i.hecho);
   if(view){const a=areas.find(x=>x.id===view);const l=sort(pend.filter(i=>i.area_id===view));
     $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Personal</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><h1>${a.icono} ${esc(a.nombre)}</h1><h3>Pendientes (${l.length})</h3>${l.map(row).join('')||'<div class="card empty">Nada pendiente aquí.</div>'}`;return}
   const top=sort(pend).slice(0,3);const now=new Date();const ym=iso(now).slice(0,7);
   const porPagar=pend.filter(i=>i.monto&&i.fecha.startsWith(ym)).reduce((s,i)=>s+Number(i.monto),0);
   const hechasMes=items.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)).length;
-  $('#app').innerHTML=`<div class="top"><div><a href="./" style="font-size:13px;color:var(--mut)">← Inicio</a><h1>Personal</h1></div><button class="btn p" onclick="openForm()">+ Nueva</button></div>
+  $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><button class="btn p" onclick="openForm()">+ Nueva</button></div><h1 style="margin-bottom:6px">Personal</h1>
   <h3>Qué hacer primero</h3>${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}
   <h3>Tus áreas</h3><div class="grid">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><b>${esc(a.nombre)}</b><br><small style="color:var(--mut)">${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div>`).join('')}</div>
   <h3>Resumen del mes</h3><div class="stats"><div class="card"><b>S/ ${porPagar.toFixed(2)}</b><small style="color:var(--mut)">por pagar este mes</small></div><div class="card"><b>${hechasMes}</b><small style="color:var(--mut)">actividades cumplidas</small></div></div>`}
