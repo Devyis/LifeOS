@@ -93,13 +93,32 @@ function render(){
   const pend=items.filter(i=>!i.hecho);
   if(view){const a=areas.find(x=>x.id===view);const l=sort(pend.filter(i=>i.area_id===view));
     $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Personal</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><h1>${a.icono} ${esc(a.nombre)}</h1><h3>Pendientes (${l.length})</h3>${l.map(row).join('')||'<div class="card empty">Nada pendiente aquí.</div>'}`;return}
-  const top=sort(pend).slice(0,3);const now=new Date();const ym=iso(now).slice(0,7);
+  const top=sort(pend).slice(0,3);
+  const aiOk=ai&&ai.sig===sig(pend);
+  const btn=`<button class="btn p" onclick="priorizarIA()" ${aiBusy?'disabled':''}>${aiBusy?'Pensando…':'🤖 Priorizar'}</button>`;
+  let prio;
+  if(aiOk){prio=`<div class="card" style="margin-bottom:8px">${esc(ai.resumen)}<br><small style="color:var(--mut)">Sugerido por ${ai.proveedor==='gemini'?'Gemini':'Groq'} · <a href="#" onclick="ai=null;render();return false">volver al orden normal</a></small></div>`+ai.orden.slice(0,8).map(o=>{const i=items.find(x=>x.id===o.id);return i?row(i)+(o.razon?`<small style="display:block;color:var(--mut);margin:-4px 0 10px 12px">💡 ${esc(o.razon)}</small>`:''):''}).join('')}
+  else prio=(aiErr?`<div class="card empty" style="color:var(--red)">${esc(aiErr)}</div>`:'')+(top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>');const now=new Date();const ym=iso(now).slice(0,7);
   const porPagar=pend.filter(i=>i.monto&&i.fecha.startsWith(ym)).reduce((s,i)=>s+Number(i.monto),0);
   const hechasMes=items.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)).length;
   $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><button class="btn p" onclick="openForm()">+ Nueva</button></div><h1 style="margin-bottom:6px">Personal</h1>
-  <h3>Qué hacer primero</h3>${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}
+  <div class="top" style="margin:18px 0 8px"><h3 style="margin:0">Qué hacer primero</h3>${pend.length?btn:''}</div>${prio}
   <h3>Tus áreas</h3><div class="grid">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><b>${esc(a.nombre)}</b><br><small style="color:var(--mut)">${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div>`).join('')}</div>
   <h3>Resumen del mes</h3><div class="stats"><div class="card"><b>S/ ${porPagar.toFixed(2)}</b><small style="color:var(--mut)">por pagar este mes</small></div><div class="card"><b>${hechasMes}</b><small style="color:var(--mut)">actividades cumplidas</small></div></div>`}
+let ai=null,aiBusy=false,aiErr='';
+const sig=l=>l.map(i=>i.id).sort((a,b)=>a-b).join(',');
+async function priorizarIA(){
+  const pend=items.filter(i=>!i.hecho);if(!pend.length)return;
+  aiBusy=true;aiErr='';render();
+  try{
+    const payload=pend.slice(0,60).map(i=>{const a=areas.find(x=>x.id===i.area_id)||{};return{id:i.id,titulo:i.titulo,categoria:i.categoria,area:a.nombre||'',fecha:i.fecha,hora:i.hora?String(i.hora).slice(0,5):null,importancia:i.importancia,esfuerzo:i.esfuerzo,monto:i.monto,repite:i.repite,notas:i.notas||''}});
+    const r=await fetch(URL_+'/functions/v1/priorizar-personal',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify({hoy:iso(new Date()),items:payload})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||r.status);
+    ai={sig:sig(pend),resumen:d.resumen,orden:d.orden,proveedor:d.proveedor};
+  }catch(e){ai=null;aiErr='No se pudo priorizar con IA ('+String(e.message||e).slice(0,120)+'). Se muestra el orden normal.'}
+  aiBusy=false;render();
+}
 let editId=null;
 function edit(id){const it=items.find(x=>x.id===id);if(it)openForm(null,it)}
 function openForm(aid,it){editId=it?it.id:null;const v=it||{};const d=$('#dlg');
