@@ -60,15 +60,15 @@ try{
 }catch(e){}
 </script>
 <script>
-const SB='https://ebtehnbffwobpdnmftod.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVidGVobmJmZndvYnBkbm1mdG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODM1NzQsImV4cCI6MjA5NTA1OTU3NH0.hzkHQ88Q_GJjH9BZJXkXOj2M3NLP8Sms-QId0jt2N3Y';
+const SB='https://syeuxondhnartyizvsqb.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5ZXV4b25kaG5hcnR5aXp2c3FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MDU5NjksImV4cCI6MjEwNjk4MTk2OX0.S8cXt1awb_AQoQ6Q1ynaqh4D2FVtux2yTxXbpeiJNtg';
 const HD={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
 let mode='login';
-function getUser(){try{return JSON.parse(localStorage.getItem('personal_user'))}catch(e){return null}}
+function getUser(){try{return JSON.parse(localStorage.getItem('lifeos_user'))}catch(e){return null}}
 function setErr(m){document.getElementById('au-err').textContent=m||''}
 function drawAuth(){
   const u=getUser(),box=document.getElementById('auth');
   document.getElementById('hi').textContent=u&&(u.displayName||u.username)?'Hola, '+(u.displayName||u.username):'LifeOS';
-  if(u&&u.username){box.innerHTML='<h3>Sesión iniciada</h3><p style="margin:0 0 12px;color:var(--mut)">Entraste como <b>'+(u.displayName||u.username).replace(/</g,'&lt;')+'</b>. Tu sesión sirve en todas las áreas.</p><button onclick="logout()">Cerrar sesión</button>';return}
+  if(u&&u.username){box.innerHTML='<h3>Sesión iniciada</h3><p style="margin:0 0 12px;color:var(--mut)">Entraste como <b>'+(u.displayName||u.username).replace(/</g,'&lt;')+'</b>. Tu sesión es de LifeOS.</p><button onclick="logout()">Cerrar sesión</button>';return}
   const reg=mode==='register';
   box.innerHTML='<h3>'+(reg?'Crear cuenta':'Iniciar sesión')+'</h3>'+
    (reg?'<input id="au-name" placeholder="Tu nombre" autocomplete="name">':'')+
@@ -78,15 +78,19 @@ function drawAuth(){
    '<button onclick="'+(reg?'register()':'login()')+'">'+(reg?'Crear cuenta':'Entrar')+'</button>'+
    '<button class="lnk" onclick="mode=\''+(reg?'login':'register')+'\';drawAuth()">'+(reg?'Ya tengo cuenta':'Crear una cuenta nueva')+'</button>';
 }
-function save(u,name,avatar){localStorage.setItem('personal_user',JSON.stringify({username:u,displayName:name,avatarUrl:avatar||''}));drawAuth()}
+function save(u,name,avatar){localStorage.setItem('lifeos_user',JSON.stringify({username:u,displayName:name,avatarUrl:avatar||''}));drawAuth()}
+async function rpc(fn,args){
+  const r=await fetch(SB+'/rest/v1/rpc/'+fn,{method:'POST',headers:HD,body:JSON.stringify(args)});
+  if(!r.ok)throw new Error('http '+r.status);
+  return r.json();
+}
 async function login(){
   const u=document.getElementById('au-user').value.trim().toLowerCase(),p=document.getElementById('au-pass').value;
   if(!u||!p){setErr('Completa todos los campos');return}
   try{
-    const r=await fetch(SB+'/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&password=eq.'+encodeURIComponent(p)+'&select=username,display_name,avatar_url',{headers:HD});
-    const rows=await r.json();
-    if(!rows.length){setErr('Usuario o contraseña incorrectos');return}
-    save(rows[0].username,rows[0].display_name,rows[0].avatar_url);
+    const row=await rpc('lifeos_login',{p_username:u,p_password:p});
+    if(!row){setErr('Usuario o contraseña incorrectos');return}
+    save(row.username,row.display_name,row.avatar_url);
   }catch(e){setErr('No se pudo conectar. Intenta de nuevo')}
 }
 async function register(){
@@ -95,14 +99,13 @@ async function register(){
   if(u.length<3){setErr('El usuario debe tener al menos 3 caracteres');return}
   if(p.length<4){setErr('La contraseña debe tener al menos 4 caracteres');return}
   try{
-    const c=await fetch(SB+'/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=username',{headers:HD});
-    if((await c.json()).length){setErr('Ese usuario ya existe');return}
-    const r=await fetch(SB+'/rest/v1/users',{method:'POST',headers:{...HD,Prefer:'return=representation'},body:JSON.stringify({username:u,password:p,display_name:n})});
-    if(!r.ok)throw 0;
-    save(u,n,'');
+    const row=await rpc('lifeos_register',{p_username:u,p_password:p,p_display:n});
+    if(row.error==='exists'){setErr('Ese usuario ya existe');return}
+    if(row.error){setErr('Datos no válidos');return}
+    save(row.username,row.display_name,'');
   }catch(e){setErr('No se pudo crear la cuenta')}
 }
-function logout(){localStorage.removeItem('personal_user');mode='login';drawAuth()}
+function logout(){localStorage.removeItem('lifeos_user');mode='login';drawAuth()}
 drawAuth();
 </script>
 </body>
