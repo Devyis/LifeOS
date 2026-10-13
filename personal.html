@@ -56,14 +56,14 @@ input,select,textarea{width:100%;padding:9px;border:1px solid var(--bd);border-r
 <main id="app"></main>
 <dialog id="dlg"></dialog>
 <script>
-const URL_='https://ebtehnbffwobpdnmftod.supabase.co', KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVidGVobmJmZndvYnBkbm1mdG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODM1NzQsImV4cCI6MjA5NTA1OTU3NH0.hzkHQ88Q_GJjH9BZJXkXOj2M3NLP8Sms-QId0jt2N3Y';
+const URL_='https://syeuxondhnartyizvsqb.supabase.co', KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5ZXV4b25kaG5hcnR5aXp2c3FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MDU5NjksImV4cCI6MjEwNjk4MTk2OX0.S8cXt1awb_AQoQ6Q1ynaqh4D2FVtux2yTxXbpeiJNtg';
 const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:'return=representation'};
 const api=async(p,o={})=>{const r=await fetch(URL_+'/rest/v1/'+p,{headers:H,...o});if(!r.ok)throw new Error(await r.text());return r.status===204?null:r.json()};
 const DEF=[['Salud','🩺','#ef4444'],['Hogar','🏠','#3b82f6'],['Finanzas','💳','#10b981'],['Trámites','📄','#f59e0b'],['Familia y social','👨‍👩‍👧','#8b5cf6']];
 const CATS=['cita','pago','trámite','compromiso','otro'];
 let user,areas=[],items=[],view=null;
 try{const t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}
-try{user=JSON.parse(localStorage.getItem('personal_user'))}catch(e){}
+try{user=JSON.parse(localStorage.getItem('lifeos_user'))}catch(e){}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
@@ -89,7 +89,7 @@ function row(i){const a=areas.find(x=>x.id===i.area_id)||{};
   const pills=(i.monto?`<span class="pl pm">S/ ${Number(i.monto).toFixed(2)}</span>`:'')+(i.repite!=='no'?`<span class="pl pg">↻ ${i.repite}</span>`:'');
   return `<div class="card row"><button class="chk" title="Marcar como hecha" onclick="done(${i.id})">✓</button><div class="t"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')} · ${i.categoria} · importancia ${['','baja','media','alta'][i.importancia]}</small>${pills?'<div>'+pills+'</div>':''}</div>${chip(i)}<button class="x" title="Editar" onclick="edit(${i.id})">✏️</button><button class="x" title="Eliminar" onclick="del(${i.id})">🗑</button></div>`}
 function render(){
-  if(!user||!user.username){$('#app').innerHTML='<div class="card empty">Inicia sesión primero en <a href="estudio">Estudio</a> y vuelve aquí.<br><br><a class="btn back" href="./">← Volver al menú</a></div>';return}
+  if(!user||!user.username){$('#app').innerHTML='<div class="card empty">Inicia sesión primero en el menú de LifeOS y vuelve aquí.<br><br><a class="btn back" href="./">← Ir al menú</a></div>';return}
   const pend=items.filter(i=>!i.hecho);
   if(view){const a=areas.find(x=>x.id===view);const l=sort(pend.filter(i=>i.area_id===view));
     $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Personal</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><h1>${a.icono} ${esc(a.nombre)}</h1><h3>Pendientes (${l.length})</h3>${l.map(row).join('')||'<div class="card empty">Nada pendiente aquí.</div>'}`;return}
