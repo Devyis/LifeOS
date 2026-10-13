@@ -94,6 +94,7 @@ function render(){
   if(view){const a=areas.find(x=>x.id===view);const l=sort(pend.filter(i=>i.area_id===view));
     $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Personal</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><h1>${a.icono} ${esc(a.nombre)}</h1><h3>Pendientes (${l.length})</h3>${l.map(row).join('')||'<div class="card empty">Nada pendiente aquí.</div>'}`;return}
   const top=sort(pend).slice(0,3);
+  const now=new Date();const ym=iso(now).slice(0,7);
   const btn=`<button class="btn p" onclick="priorizarIA()">🤖 Priorizar</button>`;
   const porPagar=pend.filter(i=>i.monto&&i.fecha.startsWith(ym)).reduce((s,i)=>s+Number(i.monto),0);
   const hechasMes=items.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)).length;
