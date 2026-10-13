@@ -3155,8 +3155,7 @@ body.dark-mode .fc-card-back { background: linear-gradient(145deg, #0d2010, #091
         <button class="theme-toggle" id="horario-btn" onclick="openHorarioModal()" title="Ver horario">🗓️</button>
         <button class="theme-toggle" id="crack-mode-btn" onclick="toggleCrackMode()" title="Modo especial" style="display:none;font-weight:800;">A</button>
         <button class="admin-btn-home" id="home-past-tasks-btn" onclick="openHomePastTasksModal()" title="Ver tareas pasadas">🗂️ pasadas</button>
-        <button class="admin-btn-home" id="chat-toggle-admin-btn" onclick="toggleChatEnabled()" title="Activar/desactivar chat" style="display:none;">💬 chat</button>
-        <button class="admin-btn-home" id="admin-btn" onclick="openPwModal()">⚙ admin</button>
+        
         <button class="admin-btn-home" id="priorizar-btn" onclick="abrirModalPriorizar()" style="display:none;">🤖 priorizar</button>
         <button class="admin-btn-home" id="modo-estudio-btn" onclick="abrirModoEstudio()" style="display:none;">📚 estudio</button>
       </div>
@@ -3165,10 +3164,7 @@ body.dark-mode .fc-card-back { background: linear-gradient(145deg, #0d2010, #091
   </div>
  <div id="home-banner-container"></div>
   <div id="ticker-wrap-container"></div>        <!-- ← ticker PRIMERO -->
-  <div id="home-versus-section-container"></div>  <!-- ← Apartado Versus (solo logueados) -->
-  <div id="vs-invites-container"></div>
   <div id="personal-section-container"></div>
-  <div id="chat-section-container"></div>
   <div class="courses-list" id="courses-list"></div>
 </div>
 
@@ -3403,6 +3399,19 @@ body.dark-mode .fc-card-back { background: linear-gradient(145deg, #0d2010, #091
   </div>
 </div>
 
+<div class="pw-overlay" id="course-modal">
+  <div class="pw-box">
+    <div class="pw-box-title">📚 nuevo curso</div>
+    <input class="form-control" id="course-icon-input" maxlength="4" placeholder="Emoji" style="width:4.5rem;margin-bottom:0.5rem">
+    <input class="form-control" id="course-name-input" placeholder="Nombre del curso" onkeydown="if(event.key==='Enter')saveNewCourse()">
+    <div class="pw-error" id="course-add-error">Escribí un nombre ✗</div>
+    <div class="modal-footer" style="margin-top:1rem">
+      <button class="btn-cancel" onclick="closeAddCourseModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="saveNewCourse()">Añadir</button>
+    </div>
+  </div>
+</div>
+
 <!-- QUICK TASK POPUP (personal section) -->
 <div class="qtask-overlay" id="qtask-overlay" onclick="closeQTaskPopup(event)">
   <div class="qtask-popup">
@@ -3481,7 +3490,6 @@ body.dark-mode .fc-card-back { background: linear-gradient(145deg, #0d2010, #091
     <div class="fc-tabs">
       <button class="fc-tab active" id="fc-tab-study" onclick="fcSwitchTab('study')">📖 Estudiar</button>
       <button class="fc-tab" id="fc-tab-manage" onclick="fcSwitchTab('manage')">⚙️ Gestionar</button>
-      <button class="fc-tab" id="fc-tab-versus" onclick="fcSwitchTab('versus')">⚔️ Versus</button>
     </div>
 
     <!-- STUDY TAB -->
@@ -3897,14 +3905,13 @@ async function quickMarkSoloHice(cid, tid) {
 
 // CONFIG
 // ═══════════════════════════════════════════
-const ADMIN_PASSWORD = 'admin123';
 
 const SUPABASE_URL  = 'https://syeuxondhnartyizvsqb.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5ZXV4b25kaG5hcnR5aXp2c3FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MDU5NjksImV4cCI6MjEwNjk4MTk2OX0.S8cXt1awb_AQoQ6Q1ynaqh4D2FVtux2yTxXbpeiJNtg';
 const BUCKET        = 'pdfs';
-// Storage (PDFs, avatares, horario): los archivos siguen en el proyecto anterior hasta migrarlos.
-const STORAGE_URL  = 'https://ebtehnbffwobpdnmftod.supabase.co';
-const STORAGE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVidGVobmJmZndvYnBkbm1mdG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODM1NzQsImV4cCI6MjA5NTA1OTU3NH0.hzkHQ88Q_GJjH9BZJXkXOj2M3NLP8Sms-QId0jt2N3Y';
+// Storage (PDFs, avatares, horario): buckets 'pdfs' y 'avatars' del proyecto LifeOS.
+const STORAGE_URL  = SUPABASE_URL;
+const STORAGE_ANON = SUPABASE_ANON;
 
 const SB_HEADERS = {
   'apikey': SUPABASE_ANON,
@@ -3960,7 +3967,7 @@ function isUserOnline(lastSeenStr) {
 
 // ── API helpers ──────────────────────────────
 async function dbGetTasks() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/tasks?select=*`, { headers: SB_HEADERS });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/tasks?username=eq.${encodeURIComponent(currentUser.username)}&select=*`, { headers: SB_HEADERS });
   if (!res.ok) throw new Error('Error cargando tareas');
   return res.json();
 }
@@ -3971,7 +3978,8 @@ async function dbInsertTask(task) {
     headers: SB_HEADERS,
     body: JSON.stringify({
       id: task.id,
-      course_id: task.course_id,
+      username: currentUser.username,
+      course_id: Number(task.course_id),
       name: task.name,
       deadline: task.deadline,
       deadline_time: task.deadline_time || null,
@@ -4013,14 +4021,80 @@ function publicUrl(path) {
 // ═══════════════════════════════════════════
 // CURSOS
 // ═══════════════════════════════════════════
-const COURSES = [
-  { id: 'sisdist', name: 'Desarrollo de Sistemas Distribuidos', icon: '🌐', color: '#3b5bdb', bg: '#e8edff' },
-  { id: 'poo',     name: 'Programación Orientada a Objetos',    icon: '☕', color: '#e67700', bg: '#fff3e0' },
-  { id: 'solemp',  name: 'Desarrollo de Soluciones Empresariales', icon: '📐', color: '#7048e8', bg: '#f3f0ff' },
-  { id: 'gproy',   name: 'Gestión de Proyectos TI',             icon: '🗂️', color: '#0c8599', bg: '#e3fafc' },
-  { id: 'bddist',  name: 'Base de Datos Distribuidas',          icon: '🗃️', color: '#1864ab', bg: '#e7f5ff' },
-  { id: 'innova',  name: 'Innovación Tecnológica',              icon: '💡', color: '#2f9e44', bg: '#ebfbee' },
+let COURSES = [];
+
+const COURSE_PALETTE = [
+  { color:'#3b5bdb', bg:'#e8edff' }, { color:'#e67700', bg:'#fff3e0' }, { color:'#7048e8', bg:'#f3f0ff' },
+  { color:'#0c8599', bg:'#e3fafc' }, { color:'#1864ab', bg:'#e7f5ff' }, { color:'#2f9e44', bg:'#ebfbee' },
+  { color:'#c2255c', bg:'#fff0f6' }, { color:'#862e9c', bg:'#f8f0fc' },
 ];
+
+async function dbGetCourses() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/courses?username=eq.${encodeURIComponent(currentUser.username)}&select=*&order=orden.asc,id.asc`, { headers: SB_HEADERS });
+  if (!res.ok) throw new Error('Error cargando cursos');
+  return res.json();
+}
+
+// Carga cursos y tareas del usuario actual (si no hay sesión, todo queda vacío)
+async function loadUserData() {
+  COURSES = []; tasks = {};
+  applyOwnerMode();
+  if (!currentUser) return;
+  const rows = await dbGetCourses();
+  COURSES = rows.map(r => ({ id: String(r.id), name: r.name, icon: r.icon || '📚', color: r.color || '#3b5bdb', bg: r.bg || '#e8edff' }));
+  const trows = await dbGetTasks();
+  tasks = buildTasksMap(trows);
+}
+
+// Cada usuario es dueño de sus cursos: con sesión iniciada puede gestionarlos
+function applyOwnerMode() {
+  isAdmin = !!currentUser;
+  document.body.classList.toggle('admin-mode', isAdmin);
+  const pb = document.getElementById('priorizar-btn'), eb = document.getElementById('modo-estudio-btn');
+  if (pb) pb.style.display = isAdmin ? 'block' : 'none';
+  if (eb) eb.style.display = isAdmin ? 'block' : 'none';
+}
+
+function openAddCourseModal() {
+  if (!currentUser) { alert('Iniciá sesión para añadir cursos.'); return; }
+  document.getElementById('course-name-input').value = '';
+  document.getElementById('course-icon-input').value = '📚';
+  document.getElementById('course-add-error').classList.remove('show');
+  document.getElementById('course-modal').classList.add('open');
+  setTimeout(() => document.getElementById('course-name-input').focus(), 50);
+}
+function closeAddCourseModal() { document.getElementById('course-modal').classList.remove('open'); }
+
+async function saveNewCourse() {
+  const name = document.getElementById('course-name-input').value.trim();
+  const icon = document.getElementById('course-icon-input').value.trim() || '📚';
+  const err = document.getElementById('course-add-error');
+  if (!name) { err.classList.add('show'); return; }
+  const pal = COURSE_PALETTE[COURSES.length % COURSE_PALETTE.length];
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/courses`, {
+      method: 'POST', headers: SB_HEADERS,
+      body: JSON.stringify({ username: currentUser.username, name, icon, color: pal.color, bg: pal.bg, orden: COURSES.length }),
+    });
+    if (!res.ok) throw new Error();
+    const [row] = await res.json();
+    COURSES.push({ id: String(row.id), name: row.name, icon: row.icon, color: row.color, bg: row.bg });
+    tasks[String(row.id)] = [];
+    closeAddCourseModal();
+    renderHome();
+  } catch(e) { err.textContent = 'No se pudo guardar el curso ✗'; err.classList.add('show'); }
+}
+
+async function deleteCourse(cid) {
+  const c = COURSES.find(x => x.id === cid); if (!c) return;
+  if (!confirm(`¿Eliminar "${c.name}" y todas sus tareas?`)) return;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/courses?id=eq.${Number(cid)}&username=eq.${encodeURIComponent(currentUser.username)}`, { method:'DELETE', headers:{ ...SB_HEADERS, 'Prefer':'' } });
+    if (!res.ok) throw new Error();
+    COURSES = COURSES.filter(x => x.id !== cid); delete tasks[cid];
+    renderHome();
+  } catch(e) { alert('No se pudo eliminar el curso'); }
+}
 
 // ═══════════════════════════════════════════
 // STATE
@@ -4441,16 +4515,19 @@ function renderHome() {
         <div class="course-icon" style="background:${c.bg}">${c.icon}</div>
         <div class="course-info">
           <div class="course-card-name">${c.name}</div>
-          <div class="course-card-sub">${c.id.toUpperCase()}</div>
+          <div class="course-card-sub">curso</div>
         </div>
         <div class="course-card-right">
           <span class="task-count-badge ${countClass}">${taskCount === 0 ? 'sin tareas' : `${taskCount} tarea${taskCount !== 1 ? 's' : ''} pendiente${taskCount !== 1 ? 's' : ''}`}</span>
           ${closestChip}
+          <button class="btn-cancel" style="padding:0.1rem 0.45rem;font-size:0.7rem" title="Eliminar curso" onclick="event.stopPropagation();deleteCourse('${c.id}')">🗑</button>
           <span class="chevron">›</span>
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + (currentUser
+    ? `<div class="course-card" onclick="openAddCourseModal()" style="border-style:dashed;cursor:pointer"><div class="course-card-inner" style="justify-content:center"><div class="course-info" style="text-align:center"><div class="course-card-name">＋ Añadir curso</div></div></div></div>`
+    : `<div class="empty-state" style="padding:1.5rem 0"><div class="emoji">📓</div><p>Iniciá sesión para crear tus cursos.</p></div>`);
 
   renderPersonalSection();
   startCardCountdowns();
@@ -5193,9 +5270,9 @@ function closePwModal() {
   document.getElementById('pw-error').classList.remove('show');
 }
 
-function checkPw() {
+function checkPw() { return; /* sin contraseña admin en LifeOS */
   const val = document.getElementById('pw-input').value;
-  if (val === ADMIN_PASSWORD) {
+  if (false) {
     isAdmin = true;
     document.body.classList.add('admin-mode');
     document.getElementById('admin-btn').classList.add('active');
@@ -5273,9 +5350,9 @@ async function loginPersonal() {
     updateCrackButtonVisibility();
     startPresenceHeartbeat();
     await loadPersonalStates();
+    await loadUserData();
     renderPersonalSection();
-    renderChatSection();
-    startChatPollingIfNeeded();
+    renderHome();
   } catch(e) {
     errEl.textContent = 'Error de conexión ✗';
     errEl.classList.add('show');
@@ -5306,9 +5383,9 @@ async function registerPersonal() {
     updateCrackButtonVisibility();
     startPresenceHeartbeat();
     await loadPersonalStates();
+    await loadUserData();
     renderPersonalSection();
-    renderChatSection();
-    startChatPollingIfNeeded();
+    renderHome();
   } catch(e) {
     errEl.textContent = 'Error al crear cuenta ✗';
     errEl.classList.add('show');
@@ -5519,10 +5596,9 @@ function logoutUser() {
   if (vsContainer) vsContainer.innerHTML = '';
   const homeVsContainer = document.getElementById('home-versus-section-container');
   if (homeVsContainer) homeVsContainer.innerHTML = '';
-  stopChatPolling();
-  const chatContainer = document.getElementById('chat-section-container');
-  if (chatContainer) chatContainer.innerHTML = '';
-  updateChatAdminButton();
+  COURSES = []; tasks = {};
+  applyOwnerMode();
+  renderHome();
 }
 
 async function loadPersonalStates() {
@@ -6297,23 +6373,19 @@ async function init() {
   document.getElementById('courses-list').innerHTML = `
     <div class="empty-state" style="padding:2rem 0">
       <div class="emoji">⏳</div>
-      <p>Cargando tareas...</p>
+      <p>Cargando...</p>
     </div>`;
   renderHome();
 
   try {
-    let rows = await dbGetTasks();
-    rows = await autoDelete(rows);
-    tasks = buildTasksMap(rows);
-
     if (currentUser) {
       await refreshCurrentUserFromDb();
+      await loadUserData();
       await loadPersonalStates();
+    } else {
+      await loadUserData();
     }
-
-    await fetchChatEnabled();
     renderHome();
-    startChatPollingIfNeeded();
   } catch(e) {
     document.getElementById('courses-list').innerHTML = `
       <div class="empty-state" style="padding:2rem 0">
@@ -7717,6 +7789,13 @@ function vsStartHomePolling() {
 
 init();
 vsStartHomePolling();
+
+// ── LifeOS: chat y versus ya no existen (tablas eliminadas). Se anulan sus funciones. ──
+function renderChatSection(){} function startChatPollingIfNeeded(){} function stopChatPolling(){}
+async function fetchChatEnabled(){ return false; } function updateChatAdminButton(){}
+async function vsRenderHomeInvites(){} function renderHomeVersusSection(){}
+function vsStartHomePolling(){} function vsStartRivalsPolling(){}
+async function fcSkipGateIfVersusParticipant(){} async function vsRenderTab(){}
 </script>
 <!-- MODAL PRIORIZAR TAREAS (solo admin) -->
 <div class="modal-overlay" id="priorizar-modal-overlay" onclick="if(event.target===this) cerrarModalPriorizar()">
