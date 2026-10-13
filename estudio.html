@@ -3899,9 +3899,12 @@ async function quickMarkSoloHice(cid, tid) {
 // ═══════════════════════════════════════════
 const ADMIN_PASSWORD = 'admin123';
 
-const SUPABASE_URL  = 'https://ebtehnbffwobpdnmftod.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVidGVobmJmZndvYnBkbm1mdG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODM1NzQsImV4cCI6MjA5NTA1OTU3NH0.hzkHQ88Q_GJjH9BZJXkXOj2M3NLP8Sms-QId0jt2N3Y';
+const SUPABASE_URL  = 'https://syeuxondhnartyizvsqb.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5ZXV4b25kaG5hcnR5aXp2c3FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MDU5NjksImV4cCI6MjEwNjk4MTk2OX0.S8cXt1awb_AQoQ6Q1ynaqh4D2FVtux2yTxXbpeiJNtg';
 const BUCKET        = 'pdfs';
+// Storage (PDFs, avatares, horario): los archivos siguen en el proyecto anterior hasta migrarlos.
+const STORAGE_URL  = 'https://ebtehnbffwobpdnmftod.supabase.co';
+const STORAGE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVidGVobmJmZndvYnBkbm1mdG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODM1NzQsImV4cCI6MjA5NTA1OTU3NH0.hzkHQ88Q_GJjH9BZJXkXOj2M3NLP8Sms-QId0jt2N3Y';
 
 const SB_HEADERS = {
   'apikey': SUPABASE_ANON,
@@ -3909,6 +3912,17 @@ const SB_HEADERS = {
   'Content-Type': 'application/json',
   'Prefer': 'return=representation',
 };
+
+async function lifeosRpc(fn, args) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+    body: JSON.stringify(args || {}),
+  });
+  if (!res.ok) throw new Error(`rpc ${fn}: ${res.status}`);
+  const t = await res.text();
+  return t ? JSON.parse(t) : null;
+}
 
 const BANNER_IMG_URL = 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80';
 const BANNER_GIF_URL = 'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif';
@@ -3923,14 +3937,7 @@ let _presenceTimer = null;
 async function presenceHeartbeat() {
   if (!currentUser) return;
   try {
-    await fetch(
-      `${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(currentUser.username)}`,
-      {
-        method: 'PATCH',
-        headers: SB_HEADERS,
-        body: JSON.stringify({ last_seen: new Date().toISOString() })
-      }
-    );
+    await lifeosRpc('lifeos_touch', { p_username: currentUser.username });
   } catch (e) { /* si falla, se reintenta en el próximo tick */ }
 }
 
@@ -4000,7 +4007,7 @@ async function dbDeleteTask(id) {
 }
 
 function publicUrl(path) {
-  return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+  return `${STORAGE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
 }
 
 // ═══════════════════════════════════════════
@@ -4974,10 +4981,10 @@ async function uploadFile(type) {
   progbar.style.width = '30%';
 
   try {
-    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+    const res = await fetch(`${STORAGE_URL}/storage/v1/object/${BUCKET}/${path}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${SUPABASE_ANON}`,
+        'Authorization': `Bearer ${STORAGE_ANON}`,
         'Content-Type': mime,
         'x-upsert': 'true',
       },
@@ -5018,9 +5025,9 @@ async function deleteFile(e, type, idx) {
   const path = task.pdfs[type][idx];
 
   try {
-    await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+    await fetch(`${STORAGE_URL}/storage/v1/object/${BUCKET}/${path}`, {
       method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${SUPABASE_ANON}` },
+      headers: { 'Authorization': `Bearer ${STORAGE_ANON}` },
     });
   } catch(e) {}
 
@@ -5229,7 +5236,7 @@ let _personalStates = {};
 let _loginMode = 'login'; // 'login' | 'register'
 
 function loadCurrentUser() {
-  try { currentUser = JSON.parse(localStorage.getItem('personal_user')) || null; } catch(e) { currentUser = null; }
+  try { currentUser = JSON.parse(localStorage.getItem('lifeos_user')) || null; } catch(e) { currentUser = null; }
   updateCrackButtonVisibility();
   startPresenceHeartbeat();
 }
@@ -5237,16 +5244,11 @@ function loadCurrentUser() {
 async function refreshCurrentUserFromDb() {
   if (!currentUser) return;
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(currentUser.username)}&select=username,display_name,avatar_url`,
-      { headers: SB_HEADERS }
-    );
-    if (!res.ok) return;
-    const rows = await res.json();
-    if (!rows.length) return;
-    currentUser.displayName = rows[0].display_name;
-    currentUser.avatarUrl   = rows[0].avatar_url || '';
-    localStorage.setItem('personal_user', JSON.stringify(currentUser));
+    const row = await lifeosRpc('lifeos_get_user', { p_username: currentUser.username });
+    if (!row) return;
+    currentUser.displayName = row.display_name;
+    currentUser.avatarUrl   = row.avatar_url || '';
+    localStorage.setItem('lifeos_user', JSON.stringify(currentUser));
   } catch(e) { console.warn('No se pudo refrescar usuario', e); }
 }
 
@@ -5257,11 +5259,8 @@ async function loginPersonal() {
   if (!u || !p) { errEl.textContent = 'Completá todos los campos ✗'; errEl.classList.add('show'); return; }
 
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(u)}&password=eq.${encodeURIComponent(p)}&select=username,display_name,avatar_url`,
-      { headers: SB_HEADERS }
-    );
-    const rows = await res.json();
+    const loginRow = await lifeosRpc('lifeos_login', { p_username: u, p_password: p });
+    const rows = loginRow ? [loginRow] : [];
     if (!rows.length) {
       errEl.textContent = 'Usuario o contraseña incorrectos ✗';
       errEl.classList.add('show');
@@ -5270,7 +5269,7 @@ async function loginPersonal() {
     }
     errEl.classList.remove('show');
     currentUser = { username: rows[0].username, displayName: rows[0].display_name, avatarUrl: rows[0].avatar_url || '' };
-    localStorage.setItem('personal_user', JSON.stringify(currentUser));
+    localStorage.setItem('lifeos_user', JSON.stringify(currentUser));
     updateCrackButtonVisibility();
     startPresenceHeartbeat();
     await loadPersonalStates();
@@ -5293,29 +5292,17 @@ async function registerPersonal() {
   if (p.length < 4)      { errEl.textContent = 'La contraseña debe tener al menos 4 caracteres ✗'; errEl.classList.add('show'); return; }
 
   try {
-    // Verificar si ya existe
-    const check = await fetch(
-      `${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(u)}&select=username`,
-      { headers: SB_HEADERS }
-    );
-    const existing = await check.json();
-    if (existing.length) {
+    const regRow = await lifeosRpc('lifeos_register', { p_username: u, p_password: p, p_display: name });
+    if (regRow && regRow.error === 'exists') {
       errEl.textContent = 'Ese usuario ya existe ✗';
       errEl.classList.add('show');
       return;
     }
-
-    // Crear usuario
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-      method: 'POST',
-      headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
-      body: JSON.stringify({ username: u, password: p, display_name: name }),
-    });
-    if (!res.ok) throw new Error();
+    if (!regRow || regRow.error) throw new Error();
 
     errEl.classList.remove('show');
     currentUser = { username: u, displayName: name, avatarUrl: '' };
-    localStorage.setItem('personal_user', JSON.stringify(currentUser));
+    localStorage.setItem('lifeos_user', JSON.stringify(currentUser));
     updateCrackButtonVisibility();
     startPresenceHeartbeat();
     await loadPersonalStates();
@@ -5347,12 +5334,12 @@ async function uploadAvatar(file) {
 
     // 1. Subir al Storage bucket "avatars"
     const uploadRes = await fetch(
-      `${SUPABASE_URL}/storage/v1/object/avatars/${fileName}`,
+      `${STORAGE_URL}/storage/v1/object/avatars/${fileName}`,
       {
         method: 'POST',
         headers: {
-          'apikey': SUPABASE_ANON,
-          'Authorization': `Bearer ${SUPABASE_ANON}`,
+          'apikey': STORAGE_ANON,
+          'Authorization': `Bearer ${STORAGE_ANON}`,
           'Content-Type': file.type || 'image/jpeg',
           'x-upsert': 'true'
         },
@@ -5365,22 +5352,14 @@ async function uploadAvatar(file) {
     }
 
     // 2. Construir URL pública
-    const avatarUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${fileName}`;
+    const avatarUrl = `${STORAGE_URL}/storage/v1/object/public/avatars/${fileName}`;
 
     // 3. Guardar URL en la tabla users
-    const patchRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(currentUser.username)}`,
-      {
-        method: 'PATCH',
-        headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ avatar_url: avatarUrl })
-      }
-    );
-    if (!patchRes.ok) throw new Error('Error al guardar la URL en la base de datos');
+    await lifeosRpc('lifeos_set_avatar', { p_username: currentUser.username, p_url: avatarUrl });
 
     // 4. Actualizar currentUser local y re-render
     currentUser.avatarUrl = avatarUrl;
-    localStorage.setItem('personal_user', JSON.stringify(currentUser));
+    localStorage.setItem('lifeos_user', JSON.stringify(currentUser));
     renderPersonalSection();
 
   } catch(e) {
@@ -5487,12 +5466,12 @@ async function uploadHorarioImage(file) {
 
     // 1. Subir al Storage bucket "avatars" (mismo bucket público que ya usa la app)
     const uploadRes = await fetch(
-      `${SUPABASE_URL}/storage/v1/object/avatars/${fileName}`,
+      `${STORAGE_URL}/storage/v1/object/avatars/${fileName}`,
       {
         method: 'POST',
         headers: {
-          'apikey': SUPABASE_ANON,
-          'Authorization': `Bearer ${SUPABASE_ANON}`,
+          'apikey': STORAGE_ANON,
+          'Authorization': `Bearer ${STORAGE_ANON}`,
           'Content-Type': contentType,
           'x-upsert': 'true'
         },
@@ -5505,7 +5484,7 @@ async function uploadHorarioImage(file) {
     }
 
     // 2. URL pública
-    const horarioUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${fileName}`;
+    const horarioUrl = `${STORAGE_URL}/storage/v1/object/public/avatars/${fileName}`;
 
     // 3. Guardar/actualizar en app_settings
     const patchRes = await fetch(
@@ -5532,7 +5511,7 @@ function logoutUser() {
   currentUser = null;
   _personalStates = {};
   _specialModeOn = false;
-  localStorage.removeItem('personal_user');
+  localStorage.removeItem('lifeos_user');
   updateCrackButtonVisibility();
   stopPresenceHeartbeat();
   renderPersonalSection();
@@ -6050,9 +6029,9 @@ async function uploadDescImages(files) {
     const path = `desc_images/${activeTaskId}/${Date.now()}-${i}.${ext}`;
     progbar.style.width = `${Math.round(((i) / files.length) * 80)}%`;
     try {
-      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+      const res = await fetch(`${STORAGE_URL}/storage/v1/object/${BUCKET}/${path}`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${SUPABASE_ANON}`, 'Content-Type': file.type, 'x-upsert': 'true' },
+        headers: { 'Authorization': `Bearer ${STORAGE_ANON}`, 'Content-Type': file.type, 'x-upsert': 'true' },
         body: file,
       });
       if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.message || `Error ${res.status}`); }
@@ -6076,8 +6055,8 @@ async function deleteDescImage(e, idx) {
   const task = tasks[activeCourseId].find(t => t.id === activeTaskId);
   const path = task.desc_images[idx];
   try {
-    await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
-      method: 'DELETE', headers: { 'Authorization': `Bearer ${SUPABASE_ANON}` },
+    await fetch(`${STORAGE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+      method: 'DELETE', headers: { 'Authorization': `Bearer ${STORAGE_ANON}` },
     });
   } catch(e) {}
   task.desc_images.splice(idx, 1);
@@ -6858,9 +6837,7 @@ function vsAvatarHtml(displayName, avatarUrl, extraClass) {
 
 async function vsFetchUsers() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/users?select=username,display_name,avatar_url&order=display_name.asc`, { headers: SB_HEADERS });
-    if (!res.ok) throw new Error('No se pudo cargar usuarios');
-    _vsAllUsers = await res.json();
+    _vsAllUsers = await lifeosRpc('lifeos_users', {});
   } catch (e) {
     _vsAllUsers = [];
   }
@@ -7654,11 +7631,7 @@ async function vsRenderRivalsScreen() {
   // Traer last_seen fresco de todos los usuarios
   let usersWithPresence = [];
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/users?select=username,display_name,avatar_url,last_seen`,
-      { headers: SB_HEADERS }
-    );
-    usersWithPresence = await res.json();
+    usersWithPresence = await lifeosRpc('lifeos_users', {});
   } catch (e) {
     usersWithPresence = _vsAllUsers;
   }
