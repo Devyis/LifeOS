@@ -106,23 +106,30 @@ async function priorizarIA(){
   const pend=items.filter(i=>!i.hecho);if(!pend.length)return;
   const d=$('#dlg');
   const head=`<div class="top"><b>🤖 Prioridades sugeridas</b><button class="x" onclick="$('#dlg').close()">✕</button></div>`;
-  d.innerHTML=head+'<div class="empty">Pensando…</div>';
+  const show=h=>{d.innerHTML=head+h};
+  show('<div class="empty">Pensando… <span id="ai-s">0</span> s</div>');
   if(!d.open)d.showModal();
+  let seg=0;const tk=setInterval(()=>{seg++;const e=$('#ai-s');if(e)e.textContent=seg},1000);
+  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),45000);
+  const t0=Date.now();
+  console.log('[priorizar] enviando '+pend.length+' pendientes a la IA…');
   try{
     const payload=pend.slice(0,60).map(i=>{const a=areas.find(x=>x.id===i.area_id)||{};return{id:i.id,titulo:i.titulo,categoria:i.categoria,area:a.nombre||'',fecha:i.fecha,hora:i.hora?String(i.hora).slice(0,5):null,importancia:i.importancia,esfuerzo:i.esfuerzo,monto:i.monto,repite:i.repite,notas:i.notas||''}});
-    const r=await fetch(URL_+'/functions/v1/priorizar-personal',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify({hoy:iso(new Date()),items:payload})});
-    const j=await r.json();
+    const r=await fetch(URL_+'/functions/v1/priorizar-personal',{method:'POST',signal:ctl.signal,headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify({hoy:iso(new Date()),items:payload})});
+    const txt=await r.text();let j;
+    try{j=JSON.parse(txt)}catch(_){throw new Error('Respuesta no válida del servidor (HTTP '+r.status+'): '+txt.slice(0,200))}
     if(j.intentos&&j.intentos.length)console.warn('[priorizar] intentos fallidos:',j.intentos);
-    if(!r.ok)throw new Error(j.error||('HTTP '+r.status));
-    console.log('[priorizar] USADO: '+j.proveedor+' · modelo '+j.modelo+' · key #'+j.key);
+    if(!r.ok)throw new Error((j.error||('HTTP '+r.status))+(j.intentos&&j.intentos.length?' — '+j.intentos.join(' | '):''));
+    console.log('[priorizar] USADO: '+j.proveedor+' · modelo '+j.modelo+' · key #'+j.key+' · '+((Date.now()-t0)/1000).toFixed(1)+' s');
     const nombre=j.proveedor==='gemini'?'Gemini':'Groq';
     const lista=j.orden.slice(0,10).map((o,n)=>{const i=items.find(x=>x.id===o.id);if(!i)return'';const a=areas.find(x=>x.id===i.area_id)||{};
       return `<div class="card row" style="margin-bottom:8px"><b style="flex:none;width:22px;color:var(--ac)">${n+1}</b><div class="t"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')} · ${esc(why(i))}</small>${o.razon?`<small style="display:block;margin-top:3px">💡 ${esc(o.razon)}</small>`:''}</div></div>`}).join('');
-    d.innerHTML=head+(j.resumen?`<p style="margin:4px 0 12px">${esc(j.resumen)}</p>`:'')+lista+`<small style="color:var(--mut);display:block;margin-top:6px">Sugerido por ${nombre} (${esc(j.modelo)}). Tu lista no cambió.</small>`;
+    show((j.resumen?`<p style="margin:4px 0 12px">${esc(j.resumen)}</p>`:'')+lista+`<small style="color:var(--mut);display:block;margin-top:6px">Sugerido por ${nombre} (${esc(j.modelo)}). Tu lista no cambió.</small>`);
   }catch(e){
-    console.error('[priorizar] error:',e);
-    d.innerHTML=head+`<div class="card empty" style="color:var(--red)">No se pudo priorizar con IA.<br><small>${esc(String(e.message||e).slice(0,160))}</small><br><small>Detalle en la consola del navegador.</small></div>`;
-  }
+    const msg=e&&e.name==='AbortError'?'No hubo respuesta en 45 segundos y se canceló.':String((e&&e.message)||e);
+    console.error('[priorizar] ERROR tras '+((Date.now()-t0)/1000).toFixed(1)+' s:',msg,e);
+    show(`<div class="card empty" style="color:var(--red)">No se pudo priorizar con IA.<br><small>${esc(msg.slice(0,300))}</small><br><small style="color:var(--mut)">Detalle en la consola del navegador.</small></div><button class="btn p" style="width:100%;margin-top:10px" onclick="priorizarIA()">Reintentar</button>`);
+  }finally{clearInterval(tk);clearTimeout(to)}
 }
 let editId=null;
 function edit(id){const it=items.find(x=>x.id===id);if(it)openForm(null,it)}
