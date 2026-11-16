@@ -3137,6 +3137,7 @@ body.dark-mode .fc-card-back { background: linear-gradient(145deg, #0d2010, #091
 
 .hub-back{display:inline-flex;align-items:center;gap:6px;margin:0 0 12px;padding:9px 16px;border-radius:999px;background:#6366f1;color:#fff !important;font:700 14px system-ui,sans-serif;text-decoration:none;box-shadow:0 2px 8px rgba(99,102,241,.35)}
 .hub-back:active{transform:scale(.97)}
+#admin-btn, .sim-expire-btn { display: none !important; }
 </style>
 </head>
 <body>
@@ -3155,7 +3156,8 @@ body.dark-mode .fc-card-back { background: linear-gradient(145deg, #0d2010, #091
         <button class="theme-toggle" id="horario-btn" onclick="openHorarioModal()" title="Ver horario">🗓️</button>
         <button class="theme-toggle" id="crack-mode-btn" onclick="toggleCrackMode()" title="Modo especial" style="display:none;font-weight:800;">A</button>
         <button class="admin-btn-home" id="home-past-tasks-btn" onclick="openHomePastTasksModal()" title="Ver tareas pasadas">🗂️ pasadas</button>
-        
+        <button class="admin-btn-home" id="chat-toggle-admin-btn" onclick="toggleChatEnabled()" title="Activar/desactivar chat" style="display:none;">💬 chat</button>
+        <button class="admin-btn-home" id="admin-btn" onclick="openPwModal()">⚙ admin</button>
         <button class="admin-btn-home" id="priorizar-btn" onclick="abrirModalPriorizar()" style="display:none;">🤖 priorizar</button>
         <button class="admin-btn-home" id="modo-estudio-btn" onclick="abrirModoEstudio()" style="display:none;">📚 estudio</button>
       </div>
@@ -3164,7 +3166,10 @@ body.dark-mode .fc-card-back { background: linear-gradient(145deg, #0d2010, #091
   </div>
  <div id="home-banner-container"></div>
   <div id="ticker-wrap-container"></div>        <!-- ← ticker PRIMERO -->
+  <div id="home-versus-section-container"></div>  <!-- ← Apartado Versus (solo logueados) -->
+  <div id="vs-invites-container"></div>
   <div id="personal-section-container"></div>
+  <div id="chat-section-container"></div>
   <div class="courses-list" id="courses-list"></div>
 </div>
 
@@ -3173,6 +3178,7 @@ body.dark-mode .fc-card-back { background: linear-gradient(145deg, #0d2010, #091
   <div class="topbar">
     <button class="back-btn" onclick="goBack('home')">←</button>
     <div class="topbar-title" id="course-topbar-title"></div>
+    <button class="topbar-action" id="del-course-btn" onclick="deleteCurrentCourse()" title="Eliminar curso" style="margin-right:0.4rem">🗑</button>
     <button class="topbar-action" id="add-task-btn" onclick="openAddModal()">+ tarea</button>
   </div>
   <div class="course-hero">
@@ -3196,6 +3202,20 @@ body.dark-mode .fc-card-back { background: linear-gradient(145deg, #0d2010, #091
     <input type="text" id="sim-expire-name-input" class="form-control" placeholder="Nombre de la tarea" style="width:100%;margin-bottom:0.9rem" onkeydown="if(event.key==='Enter') confirmSimExpire()">
     <button class="topbar-action" style="width:100%;display:block;text-align:center" onclick="confirmSimExpire()">Crear y vencer</button>
     <button class="qtask-cancel" style="width:100%;margin-top:0.6rem" onclick="closeSimExpireModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- ADD COURSE MODAL -->
+<div class="modal-overlay" id="add-course-modal-overlay" onclick="if(event.target===this) closeAddCourseModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📚 Nuevo curso</div>
+    <input type="text" id="add-course-name" class="form-control" placeholder="Nombre del curso" maxlength="80" style="width:100%;margin-bottom:0.8rem" onkeydown="if(event.key==='Enter') confirmAddCourse()">
+    <div id="add-course-icons" style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.8rem"></div>
+    <div id="add-course-colors" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.9rem"></div>
+    <div id="add-course-err" style="color:var(--red);font-size:0.75rem;min-height:1em;margin-bottom:0.5rem"></div>
+    <button class="topbar-action" style="width:100%;display:block;text-align:center" onclick="confirmAddCourse()">Crear curso</button>
+    <button class="qtask-cancel" style="width:100%;margin-top:0.6rem" onclick="closeAddCourseModal()">Cancelar</button>
   </div>
 </div>
 
@@ -3395,19 +3415,6 @@ body.dark-mode .fc-card-back { background: linear-gradient(145deg, #0d2010, #091
     <div class="modal-footer" style="margin-top:1rem">
       <button class="btn-cancel" onclick="closePwModal()">Cancelar</button>
       <button class="btn-confirm" onclick="checkPw()">Entrar</button>
-    </div>
-  </div>
-</div>
-
-<div class="pw-overlay" id="course-modal">
-  <div class="pw-box">
-    <div class="pw-box-title">📚 nuevo curso</div>
-    <input class="form-control" id="course-icon-input" maxlength="4" placeholder="Emoji" style="width:4.5rem;margin-bottom:0.5rem">
-    <input class="form-control" id="course-name-input" placeholder="Nombre del curso" onkeydown="if(event.key==='Enter')saveNewCourse()">
-    <div class="pw-error" id="course-add-error">Escribí un nombre ✗</div>
-    <div class="modal-footer" style="margin-top:1rem">
-      <button class="btn-cancel" onclick="closeAddCourseModal()">Cancelar</button>
-      <button class="btn-confirm" onclick="saveNewCourse()">Añadir</button>
     </div>
   </div>
 </div>
@@ -3905,11 +3912,12 @@ async function quickMarkSoloHice(cid, tid) {
 
 // CONFIG
 // ═══════════════════════════════════════════
+const ADMIN_PASSWORD = null; // en LifeOS cada usuario es dueño de sus cursos
 
 const SUPABASE_URL  = 'https://syeuxondhnartyizvsqb.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5ZXV4b25kaG5hcnR5aXp2c3FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MDU5NjksImV4cCI6MjEwNjk4MTk2OX0.S8cXt1awb_AQoQ6Q1ynaqh4D2FVtux2yTxXbpeiJNtg';
 const BUCKET        = 'pdfs';
-// Storage (PDFs, avatares, horario): buckets 'pdfs' y 'avatars' del proyecto LifeOS.
+// Storage de LifeOS (buckets pdfs y avatars)
 const STORAGE_URL  = SUPABASE_URL;
 const STORAGE_ANON = SUPABASE_ANON;
 
@@ -3948,7 +3956,7 @@ async function presenceHeartbeat() {
   } catch (e) { /* si falla, se reintenta en el próximo tick */ }
 }
 
-function startPresenceHeartbeat() {
+function __legacy_startPresenceHeartbeat() {
   stopPresenceHeartbeat();
   if (!currentUser) return;
   presenceHeartbeat(); // primer aviso inmediato
@@ -3967,7 +3975,8 @@ function isUserOnline(lastSeenStr) {
 
 // ── API helpers ──────────────────────────────
 async function dbGetTasks() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/tasks?username=eq.${encodeURIComponent(currentUser.username)}&select=*`, { headers: SB_HEADERS });
+  if (!currentUser) return [];
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/tasks?select=*&username=eq.${encodeURIComponent(currentUser.username)}`, { headers: SB_HEADERS });
   if (!res.ok) throw new Error('Error cargando tareas');
   return res.json();
 }
@@ -3979,7 +3988,7 @@ async function dbInsertTask(task) {
     body: JSON.stringify({
       id: task.id,
       username: currentUser.username,
-      course_id: Number(task.course_id),
+      course_id: task.course_id,
       name: task.name,
       deadline: task.deadline,
       deadline_time: task.deadline_time || null,
@@ -4014,6 +4023,108 @@ async function dbDeleteTask(id) {
   if (!res.ok) throw new Error('Error al eliminar');
 }
 
+// ── Cursos por usuario ──
+async function dbGetCourses() {
+  if (!currentUser) return [];
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/courses?select=*&username=eq.${encodeURIComponent(currentUser.username)}&order=orden.asc,creado_en.asc`, { headers: SB_HEADERS });
+  if (!res.ok) throw new Error('Error cargando cursos');
+  return res.json();
+}
+async function dbInsertCourse(c) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/courses`, {
+    method: 'POST', headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ id: c.id, username: currentUser.username, name: c.name, icon: c.icon, color: c.color, bg: c.bg, orden: c.orden }),
+  });
+  if (!res.ok) throw new Error('No se pudo crear el curso');
+}
+async function dbDeleteCourse(id) {
+  const u = encodeURIComponent(currentUser.username);
+  await fetch(`${SUPABASE_URL}/rest/v1/tasks?course_id=eq.${encodeURIComponent(id)}&username=eq.${u}`, { method: 'DELETE', headers: { ...SB_HEADERS, 'Prefer': '' } });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/courses?id=eq.${encodeURIComponent(id)}&username=eq.${u}`, { method: 'DELETE', headers: { ...SB_HEADERS, 'Prefer': '' } });
+  if (!res.ok) throw new Error('No se pudo eliminar el curso');
+}
+
+// El usuario logueado es dueño de sus cursos: puede crear/editar todo.
+function enableOwnerMode() {
+  isAdmin = true;
+  document.body.classList.add('admin-mode');
+  const p = document.getElementById('priorizar-btn'), m = document.getElementById('modo-estudio-btn');
+  if (p) p.style.display = 'block';
+  if (m) m.style.display = 'block';
+}
+function disableOwnerMode() {
+  isAdmin = false;
+  document.body.classList.remove('admin-mode');
+  const p = document.getElementById('priorizar-btn'), m = document.getElementById('modo-estudio-btn');
+  if (p) p.style.display = 'none';
+  if (m) m.style.display = 'none';
+}
+async function initUserData() {
+  if (!currentUser) { COURSES = []; tasks = {}; disableOwnerMode(); renderHome(); return; }
+  COURSES = await dbGetCourses();
+  const rows = await dbGetTasks();
+  tasks = buildTasksMap(rows);
+  await loadPersonalStates();
+  enableOwnerMode();
+  renderHome();
+}
+
+// ── Añadir / eliminar curso ──
+const COURSE_ICONS = ['📚','💻','🧮','🔬','🎨','📐','🌐','☕','🗃️','💡','📊','🎵'];
+const COURSE_PALETTE = [['#3b5bdb','#e8edff'],['#e67700','#fff3e0'],['#7048e8','#f3f0ff'],['#0c8599','#e3fafc'],['#1864ab','#e7f5ff'],['#2f9e44','#ebfbee'],['#c2255c','#fff0f6'],['#e8590c','#fff4e6']];
+let _newCourseIcon = COURSE_ICONS[0], _newCoursePal = 0;
+
+function addCourseCardHtml() {
+  if (!currentUser) {
+    return `<div class="empty-state" style="padding:2rem 0"><div class="emoji">👤</div><p>Inicia sesión para ver y crear tus cursos.</p></div>`;
+  }
+  const hint = COURSES.length === 0
+    ? `<div class="empty-state" style="padding:1rem 0 0.4rem"><div class="emoji">📓</div><p>Aún no tienes cursos.<br>Añade el primero con el botón de abajo.</p></div>` : '';
+  return `${hint}<div class="course-card" onclick="openAddCourseModal()" style="border-style:dashed">
+    <div class="course-card-inner">
+      <div class="course-icon" style="background:var(--accent-light);color:var(--accent);font-weight:800;font-size:1.6rem">+</div>
+      <div class="course-info"><div class="course-card-name">Añadir curso</div><div class="course-card-sub">NUEVO</div></div>
+    </div></div>`;
+}
+function renderCoursePickers() {
+  document.getElementById('add-course-icons').innerHTML = COURSE_ICONS.map(i =>
+    `<button type="button" onclick="_newCourseIcon='${i}';renderCoursePickers()" style="font-size:1.3rem;padding:0.3rem 0.5rem;border-radius:10px;cursor:pointer;background:var(--card,#fff);border:2px solid ${i===_newCourseIcon?'var(--accent)':'var(--border,#ddd)'}">${i}</button>`).join('');
+  document.getElementById('add-course-colors').innerHTML = COURSE_PALETTE.map((c,k) =>
+    `<button type="button" onclick="_newCoursePal=${k};renderCoursePickers()" style="width:30px;height:30px;border-radius:50%;cursor:pointer;background:${c[0]};border:3px solid ${k===_newCoursePal?'var(--text,#222)':'transparent'}"></button>`).join('');
+}
+function openAddCourseModal() {
+  if (!currentUser) { alert('Inicia sesión primero.'); return; }
+  document.getElementById('add-course-name').value = '';
+  document.getElementById('add-course-err').textContent = '';
+  _newCourseIcon = COURSE_ICONS[0]; _newCoursePal = COURSES.length % COURSE_PALETTE.length;
+  renderCoursePickers();
+  document.getElementById('add-course-modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('add-course-name').focus(), 200);
+}
+function closeAddCourseModal() { document.getElementById('add-course-modal-overlay').classList.remove('open'); }
+async function confirmAddCourse() {
+  const name = document.getElementById('add-course-name').value.replace(/[<>&"'`]/g, '').trim();
+  const err = document.getElementById('add-course-err');
+  if (!name) { err.textContent = 'Escribe el nombre del curso.'; return; }
+  const pal = COURSE_PALETTE[_newCoursePal];
+  const c = { id: 'c' + Date.now(), name, icon: _newCourseIcon, color: pal[0], bg: pal[1], orden: COURSES.length };
+  try {
+    await dbInsertCourse(c);
+    COURSES.push(c); tasks[c.id] = [];
+    closeAddCourseModal(); renderHome();
+  } catch (e) { err.textContent = 'No se pudo crear el curso. Intenta de nuevo.'; }
+}
+async function deleteCurrentCourse() {
+  const c = COURSES.find(x => x.id === activeCourseId);
+  if (!c) return;
+  if (!confirm('¿Eliminar el curso "' + c.name + '" y todas sus tareas?')) return;
+  try {
+    await dbDeleteCourse(c.id);
+    COURSES = COURSES.filter(x => x.id !== c.id); delete tasks[c.id];
+    activeCourseId = null; goBack('home');
+  } catch (e) { alert('No se pudo eliminar el curso.'); }
+}
+
 function publicUrl(path) {
   return `${STORAGE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
 }
@@ -4021,84 +4132,19 @@ function publicUrl(path) {
 // ═══════════════════════════════════════════
 // CURSOS
 // ═══════════════════════════════════════════
-let COURSES = [];
-
-const COURSE_PALETTE = [
-  { color:'#3b5bdb', bg:'#e8edff' }, { color:'#e67700', bg:'#fff3e0' }, { color:'#7048e8', bg:'#f3f0ff' },
-  { color:'#0c8599', bg:'#e3fafc' }, { color:'#1864ab', bg:'#e7f5ff' }, { color:'#2f9e44', bg:'#ebfbee' },
-  { color:'#c2255c', bg:'#fff0f6' }, { color:'#862e9c', bg:'#f8f0fc' },
-];
-
-async function dbGetCourses() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/courses?username=eq.${encodeURIComponent(currentUser.username)}&select=*&order=orden.asc,id.asc`, { headers: SB_HEADERS });
-  if (!res.ok) throw new Error('Error cargando cursos');
-  return res.json();
-}
-
-// Carga cursos y tareas del usuario actual (si no hay sesión, todo queda vacío)
-async function loadUserData() {
-  COURSES = []; tasks = {};
-  applyOwnerMode();
-  if (!currentUser) return;
-  const rows = await dbGetCourses();
-  COURSES = rows.map(r => ({ id: String(r.id), name: r.name, icon: r.icon || '📚', color: r.color || '#3b5bdb', bg: r.bg || '#e8edff' }));
-  const trows = await dbGetTasks();
-  tasks = buildTasksMap(trows);
-}
-
-// Cada usuario es dueño de sus cursos: con sesión iniciada puede gestionarlos
-function applyOwnerMode() {
-  isAdmin = !!currentUser;
-  document.body.classList.toggle('admin-mode', isAdmin);
-  const pb = document.getElementById('priorizar-btn'), eb = document.getElementById('modo-estudio-btn');
-  if (pb) pb.style.display = isAdmin ? 'block' : 'none';
-  if (eb) eb.style.display = isAdmin ? 'block' : 'none';
-}
-
-function openAddCourseModal() {
-  if (!currentUser) { alert('Iniciá sesión para añadir cursos.'); return; }
-  document.getElementById('course-name-input').value = '';
-  document.getElementById('course-icon-input').value = '📚';
-  document.getElementById('course-add-error').classList.remove('show');
-  document.getElementById('course-modal').classList.add('open');
-  setTimeout(() => document.getElementById('course-name-input').focus(), 50);
-}
-function closeAddCourseModal() { document.getElementById('course-modal').classList.remove('open'); }
-
-async function saveNewCourse() {
-  const name = document.getElementById('course-name-input').value.trim();
-  const icon = document.getElementById('course-icon-input').value.trim() || '📚';
-  const err = document.getElementById('course-add-error');
-  if (!name) { err.classList.add('show'); return; }
-  const pal = COURSE_PALETTE[COURSES.length % COURSE_PALETTE.length];
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/courses`, {
-      method: 'POST', headers: SB_HEADERS,
-      body: JSON.stringify({ username: currentUser.username, name, icon, color: pal.color, bg: pal.bg, orden: COURSES.length }),
-    });
-    if (!res.ok) throw new Error();
-    const [row] = await res.json();
-    COURSES.push({ id: String(row.id), name: row.name, icon: row.icon, color: row.color, bg: row.bg });
-    tasks[String(row.id)] = [];
-    closeAddCourseModal();
-    renderHome();
-  } catch(e) { err.textContent = 'No se pudo guardar el curso ✗'; err.classList.add('show'); }
-}
-
-async function deleteCourse(cid) {
-  const c = COURSES.find(x => x.id === cid); if (!c) return;
-  if (!confirm(`¿Eliminar "${c.name}" y todas sus tareas?`)) return;
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/courses?id=eq.${Number(cid)}&username=eq.${encodeURIComponent(currentUser.username)}`, { method:'DELETE', headers:{ ...SB_HEADERS, 'Prefer':'' } });
-    if (!res.ok) throw new Error();
-    COURSES = COURSES.filter(x => x.id !== cid); delete tasks[cid];
-    renderHome();
-  } catch(e) { alert('No se pudo eliminar el curso'); }
-}
+let COURSES = [];  // se cargan por usuario desde la tabla courses
 
 // ═══════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════
+// Versus, chat y presencia no existen en LifeOS
+function renderHomeVersusSection() {}
+function vsRenderHomeInvites() {}
+function renderChatSection() {}
+async function fetchChatEnabled() {}
+function startChatPollingIfNeeded() {}
+function updateChatAdminButton() {}
+function startPresenceHeartbeat() {}
 let tasks          = {};
 let isAdmin        = false;
 let activeCourseId = null;
@@ -4515,19 +4561,16 @@ function renderHome() {
         <div class="course-icon" style="background:${c.bg}">${c.icon}</div>
         <div class="course-info">
           <div class="course-card-name">${c.name}</div>
-          <div class="course-card-sub">curso</div>
+          <div class="course-card-sub">CURSO</div>
         </div>
         <div class="course-card-right">
           <span class="task-count-badge ${countClass}">${taskCount === 0 ? 'sin tareas' : `${taskCount} tarea${taskCount !== 1 ? 's' : ''} pendiente${taskCount !== 1 ? 's' : ''}`}</span>
           ${closestChip}
-          <button class="btn-cancel" style="padding:0.1rem 0.45rem;font-size:0.7rem" title="Eliminar curso" onclick="event.stopPropagation();deleteCourse('${c.id}')">🗑</button>
           <span class="chevron">›</span>
         </div>
       </div>
     </div>`;
-  }).join('') + (currentUser
-    ? `<div class="course-card" onclick="openAddCourseModal()" style="border-style:dashed;cursor:pointer"><div class="course-card-inner" style="justify-content:center"><div class="course-info" style="text-align:center"><div class="course-card-name">＋ Añadir curso</div></div></div></div>`
-    : `<div class="empty-state" style="padding:1.5rem 0"><div class="emoji">📓</div><p>Iniciá sesión para crear tus cursos.</p></div>`);
+  }).join('') + addCourseCardHtml();
 
   renderPersonalSection();
   startCardCountdowns();
@@ -5270,9 +5313,9 @@ function closePwModal() {
   document.getElementById('pw-error').classList.remove('show');
 }
 
-function checkPw() { return; /* sin contraseña admin en LifeOS */
+function checkPw() {
   const val = document.getElementById('pw-input').value;
-  if (false) {
+  if (val === ADMIN_PASSWORD) {
     isAdmin = true;
     document.body.classList.add('admin-mode');
     document.getElementById('admin-btn').classList.add('active');
@@ -5349,10 +5392,7 @@ async function loginPersonal() {
     localStorage.setItem('lifeos_user', JSON.stringify(currentUser));
     updateCrackButtonVisibility();
     startPresenceHeartbeat();
-    await loadPersonalStates();
-    await loadUserData();
-    renderPersonalSection();
-    renderHome();
+    await initUserData();
   } catch(e) {
     errEl.textContent = 'Error de conexión ✗';
     errEl.classList.add('show');
@@ -5382,10 +5422,7 @@ async function registerPersonal() {
     localStorage.setItem('lifeos_user', JSON.stringify(currentUser));
     updateCrackButtonVisibility();
     startPresenceHeartbeat();
-    await loadPersonalStates();
-    await loadUserData();
-    renderPersonalSection();
-    renderHome();
+    await initUserData();
   } catch(e) {
     errEl.textContent = 'Error al crear cuenta ✗';
     errEl.classList.add('show');
@@ -5453,7 +5490,7 @@ let _horarioUrl = null;
 async function fetchHorarioUrl() {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/app_settings?key=eq.horario_image_url&select=value`,
+      `${SUPABASE_URL}/rest/v1/app_settings?key=eq.${encodeURIComponent('horario_image_url:' + (currentUser ? currentUser.username : ''))}&select=value`,
       { headers: SB_HEADERS }
     );
     const rows = await res.json();
@@ -5569,7 +5606,7 @@ async function uploadHorarioImage(file) {
       {
         method: 'POST',
         headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-        body: JSON.stringify({ key: 'horario_image_url', value: horarioUrl })
+        body: JSON.stringify({ key: 'horario_image_url:' + currentUser.username, value: horarioUrl })
       }
     );
     if (!patchRes.ok) throw new Error('Error al guardar la imagen en la base de datos');
@@ -5596,9 +5633,11 @@ function logoutUser() {
   if (vsContainer) vsContainer.innerHTML = '';
   const homeVsContainer = document.getElementById('home-versus-section-container');
   if (homeVsContainer) homeVsContainer.innerHTML = '';
-  COURSES = []; tasks = {};
-  applyOwnerMode();
-  renderHome();
+  stopChatPolling();
+  const chatContainer = document.getElementById('chat-section-container');
+  if (chatContainer) chatContainer.innerHTML = '';
+  updateChatAdminButton();
+  COURSES = []; tasks = {}; disableOwnerMode(); renderHome();
 }
 
 async function loadPersonalStates() {
@@ -6172,7 +6211,7 @@ let _chatPollTimer = null;
 let _chatMessages = [];
 let _chatLastFetchAt = null; // evita parpadeo re-renderizando si no hay mensajes nuevos
 
-async function fetchChatEnabled() {
+async function __legacy_fetchChatEnabled() {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/app_settings?key=eq.chat_enabled&select=value`,
@@ -6226,7 +6265,7 @@ async function toggleChatEnabled() {
   }
 }
 
-function updateChatAdminButton() {
+function __legacy_updateChatAdminButton() {
   const btn = document.getElementById('chat-toggle-admin-btn');
   if (!btn) return;
   if (!isAdmin) { btn.style.display = 'none'; return; }
@@ -6247,7 +6286,7 @@ async function fetchChatMessages() {
   } catch (e) { /* se reintenta en el próximo poll */ }
 }
 
-function renderChatSection() {
+function __legacy_renderChatSection() {
   const container = document.getElementById('chat-section-container');
   if (!container) return;
 
@@ -6348,7 +6387,7 @@ async function sendChatMessage() {
   }
 }
 
-function startChatPollingIfNeeded() {
+function __legacy_startChatPollingIfNeeded() {
   stopChatPolling();
   if (!currentUser || !_chatEnabled) return;
   fetchChatMessages().then(renderChatMessagesList);
@@ -6373,19 +6412,13 @@ async function init() {
   document.getElementById('courses-list').innerHTML = `
     <div class="empty-state" style="padding:2rem 0">
       <div class="emoji">⏳</div>
-      <p>Cargando...</p>
+      <p>Cargando tus cursos...</p>
     </div>`;
   renderHome();
 
   try {
-    if (currentUser) {
-      await refreshCurrentUserFromDb();
-      await loadUserData();
-      await loadPersonalStates();
-    } else {
-      await loadUserData();
-    }
-    renderHome();
+    if (currentUser) await refreshCurrentUserFromDb();
+    await initUserData();
   } catch(e) {
     document.getElementById('courses-list').innerHTML = `
       <div class="empty-state" style="padding:2rem 0">
@@ -6398,8 +6431,8 @@ async function init() {
 // ═══════════════════════════════════════════
 // PROBANDING FLASHCARDS SYSTEM (multi-deck)
 // ═══════════════════════════════════════════
-const FC_PASSWORD = 'elpepe';
-let _fcUnlocked   = false;
+const FC_PASSWORD = null;
+let _fcUnlocked   = true;
 let _fcIndex      = 0;
 let _fcShuffled   = [];
 let _fcParsedCsv  = [];
@@ -7482,7 +7515,7 @@ function vsVibrate() {
   if (navigator.vibrate) { try { navigator.vibrate([120, 60, 120]); } catch(e) {} }
 }
 
-async function vsRenderHomeInvites() {
+async function __legacy_vsRenderHomeInvites() {
   const container = document.getElementById('vs-invites-container');
   if (!container) return;
   if (!currentUser) { container.innerHTML = ''; return; }
@@ -7571,7 +7604,7 @@ let _vsSelectedCourseId = null;
 let _vsSelectedTaskId = null;
 let _vsRivalsPollTimer = null;
 
-function renderHomeVersusSection() {
+function __legacy_renderHomeVersusSection() {
   const container = document.getElementById('home-versus-section-container');
   if (!container) return;
   if (!currentUser) { container.innerHTML = ''; return; }
@@ -7789,13 +7822,6 @@ function vsStartHomePolling() {
 
 init();
 vsStartHomePolling();
-
-// ── LifeOS: chat y versus ya no existen (tablas eliminadas). Se anulan sus funciones. ──
-function renderChatSection(){} function startChatPollingIfNeeded(){} function stopChatPolling(){}
-async function fetchChatEnabled(){ return false; } function updateChatAdminButton(){}
-async function vsRenderHomeInvites(){} function renderHomeVersusSection(){}
-function vsStartHomePolling(){} function vsStartRivalsPolling(){}
-async function fcSkipGateIfVersusParticipant(){} async function vsRenderTab(){}
 </script>
 <!-- MODAL PRIORIZAR TAREAS (solo admin) -->
 <div class="modal-overlay" id="priorizar-modal-overlay" onclick="if(event.target===this) cerrarModalPriorizar()">
