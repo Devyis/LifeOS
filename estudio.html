@@ -4028,14 +4028,18 @@ async function dbGetCourses() {
   if (!currentUser) return [];
   const res = await fetch(`${SUPABASE_URL}/rest/v1/courses?select=*&username=eq.${encodeURIComponent(currentUser.username)}&order=orden.asc,creado_en.asc`, { headers: SB_HEADERS });
   if (!res.ok) throw new Error('Error cargando cursos');
-  return res.json();
+  const rows = await res.json();
+  return rows.map(r => ({ ...r, id: String(r.id) }));   // el resto del código usa ids como texto
 }
 async function dbInsertCourse(c) {
+  // El id lo genera la base (identity); se devuelve la fila creada.
   const res = await fetch(`${SUPABASE_URL}/rest/v1/courses`, {
-    method: 'POST', headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
-    body: JSON.stringify({ id: c.id, username: currentUser.username, name: c.name, icon: c.icon, color: c.color, bg: c.bg, orden: c.orden }),
+    method: 'POST', headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+    body: JSON.stringify({ username: currentUser.username, name: c.name, icon: c.icon, color: c.color, bg: c.bg, orden: c.orden }),
   });
   if (!res.ok) throw new Error('No se pudo crear el curso');
+  const rows = await res.json();
+  return String(rows[0].id);
 }
 async function dbDeleteCourse(id) {
   const u = encodeURIComponent(currentUser.username);
@@ -4107,9 +4111,9 @@ async function confirmAddCourse() {
   const err = document.getElementById('add-course-err');
   if (!name) { err.textContent = 'Escribe el nombre del curso.'; return; }
   const pal = COURSE_PALETTE[_newCoursePal];
-  const c = { id: 'c' + Date.now(), name, icon: _newCourseIcon, color: pal[0], bg: pal[1], orden: COURSES.length };
+  const c = { id: null, name, icon: _newCourseIcon, color: pal[0], bg: pal[1], orden: COURSES.length };
   try {
-    await dbInsertCourse(c);
+    c.id = await dbInsertCourse(c);
     COURSES.push(c); tasks[c.id] = [];
     closeAddCourseModal(); renderHome();
   } catch (e) { err.textContent = 'No se pudo crear el curso. Intenta de nuevo.'; }
