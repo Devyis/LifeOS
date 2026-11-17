@@ -129,18 +129,23 @@ async function del(id){if(!confirm('¿Eliminar esta actividad?'))return;try{awai
 /* ===== IA: captura en lenguaje natural + plan de hoy ===== */
 const WD=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 async function ia(b){const r=await fetch(URL_+'/functions/v1/lifeos-ia',{method:'POST',headers:H,body:JSON.stringify(b)});const j=await r.json();if(j.error)throw new Error(j.error);return j}
+function dmf(l){const now=new Date(),b=l.match(/\bd[ií]a\s+(\d{1,2})\b(?!\s*de\s)/)||l.match(/\bel\s+(\d{1,2})\b(?!\s*(?:de\s|\/|:|am|pm|h\b|soles?))/);if(!b)return null;const d=+b[1];if(d<1||d>31)return null;
+  let y=now.getFullYear(),m=now.getMonth();if(d<now.getDate()){m++;if(m>11){m=0;y++}}
+  return iso(new Date(y,m,Math.min(d,new Date(y,m+1,0).getDate())))}
 function localParse(t){const now=new Date(),l=t.toLowerCase(),add=n=>iso(new Date(now.getFullYear(),now.getMonth(),now.getDate()+n));let f=iso(now);
   if(/pasado mañana/.test(l))f=add(2);else if(/mañana/.test(l))f=add(1);
+  else if(dmf(l))f=dmf(l);
   else{const k=WD.findIndex(w=>l.includes(w)||l.includes(w.normalize('NFD').replace(/[\u0300-\u036f]/g,'')));if(k>=0)f=add((k-now.getDay()+7)%7||7)}
-  const m=l.match(/s\/\.?\s*(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)\s*soles?/),monto=m?parseFloat((m[1]||m[2]).replace(',','.')):null;
+  const m=l.match(/s\/\.?\s*(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)\s*soles?|(?:cuesta|cuestan|costo|costó|son|total)\s*(?:de\s*)?(\d+(?:[.,]\d+)?)/),monto=m?parseFloat((m[1]||m[2]||m[3]).replace(',','.')):null;
   const h=l.match(/(\d{1,2})(?::(\d\d))?\s*(am|pm)\b/),hora=h?pad((+h[1]%12)+(h[3]==='pm'?12:0))+':'+(h[2]||'00'):'';
   const cat=/pag|recibo|luz|agua|alquiler/.test(l)?'pago':/cita|doctor|dentista|médico/.test(l)?'cita':/trámite|dni|renov/.test(l)?'trámite':'otro';
-  const titulo=t.replace(/\s*(el |para )?(lunes|martes|miércoles|jueves|viernes|sábado|domingo|pasado mañana|mañana|hoy)/gi,'').replace(/s\/\.?\s*\d+([.,]\d+)?|\d+([.,]\d+)?\s*soles?/gi,'').replace(/\s+/g,' ').trim();
-  return{titulo:titulo||t,fecha:f,hora,monto,categoria:cat,importancia:monto||cat==='pago'?3:2,esfuerzo:2,repite:'no'}}
+  const titulo=t.replace(/\s*(el )?d[ií]a\s+\d{1,2}\b/gi,'').replace(/\s*(cuesta|cuestan|costo|costó)\s*(de\s*)?(s\/\.?\s*)?\d+([.,]\d+)?(\s*soles?)?/gi,'').replace(/\s*(el |para )?(lunes|martes|miércoles|jueves|viernes|sábado|domingo|pasado mañana|mañana|hoy)/gi,'').replace(/s\/\.?\s*\d+([.,]\d+)?|\d+([.,]\d+)?\s*soles?/gi,'').replace(/\s+/g,' ').trim();
+  return{dm:!!dmf(l),titulo:titulo||t,fecha:f,hora,monto,categoria:cat,importancia:monto||cat==='pago'?3:2,esfuerzo:2,repite:'no'}}
 function guessArea(t,c){const l=(t+' '+(c||'')).toLowerCase(),by=re=>areas.find(a=>re.test(a.nombre.toLowerCase()));
   return(/pag|recibo|luz|agua|internet|alquiler|tarjeta|deuda|cuota|dinero/.test(l)&&by(/finanz/))||(/cita|doctor|dentista|médic|medic|pastilla|vacuna|salud/.test(l)&&by(/salud/))||(/trámite|tramite|dni|renov|document|sunat|municip/.test(l)&&by(/tr[aá]mite/))||(/casa|hogar|limpi|arregl|gas|mantenim/.test(l)&&by(/hogar/))||(/cumple|familia|amig|regalo|reuni/.test(l)&&by(/familia/))||null}
 async function capture(){const t=$('#cap').value.trim();if(!t)return;const m=$('#cap-msg'),now=new Date();m.textContent='Entendiendo…';let r=null;
   try{r=(await ia({modo:'captura',texto:t,hoy:iso(now),dia:WD[now.getDay()],areas:areas.map(a=>({id:a.id,nombre:a.nombre}))})).resultado}catch(e){}
+  if(r&&r.titulo){const lp=localParse(t);if(!(+r.monto>0)&&lp.monto)r.monto=lp.monto;if(lp.dm)r.fecha=lp.fecha}
   if(!r||!r.titulo){r=localParse(t);m.textContent='Sin IA por ahora: lectura básica. Revisa los datos.'}else m.textContent='Revisa los datos y guarda ✓';
   const ok=(v,a,d)=>a.includes(v)?v:d;
   openForm(null,{titulo:String(r.titulo).slice(0,120),area_id:areas.some(a=>a.id==r.area_id)?+r.area_id:(guessArea(t,r.categoria)||areas[0]||{}).id,categoria:ok(r.categoria,CATS,'otro'),fecha:/^\d{4}-\d\d-\d\d$/.test(r.fecha)?r.fecha:iso(now),hora:r.hora||'',importancia:ok(+r.importancia,[1,2,3],2),esfuerzo:ok(+r.esfuerzo,[1,2,3],2),monto:r.monto>0?r.monto:null,repite:ok(r.repite,['no','semanal','mensual','anual'],'no'),notas:r.notas||''})}
