@@ -3139,14 +3139,16 @@ body.dark-mode .fc-card-back { background: linear-gradient(145deg, #0d2010, #091
 .hub-back:active{transform:scale(.97)}
 #admin-btn, .sim-expire-btn { display: none !important; }
 /* ── captura con IA (estudio) ── */
-.eia{display:none;margin-top:.9rem}
+.eia{display:none;margin:1.1rem 0 .4rem}
 .eia.on{display:block}
-.eia-bar{display:flex;align-items:center;gap:.4rem;background:var(--paper);border:1.5px solid var(--line);border-radius:999px;padding:.3rem .35rem .3rem 1rem}
-.eia-bar:focus-within{border-color:var(--accent)}
-.eia-bar input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;font-size:.9rem;padding:.55rem 0;outline:none}
-.eia-bar button{border:0;border-radius:50%;width:38px;height:38px;cursor:pointer;background:var(--accent-light);font-size:1rem;flex:none}
-.eia-bar .go{background:var(--accent)}
-.eia-msg{font-size:.75rem;color:var(--muted);min-height:1.1em;margin:.35rem .5rem 0}
+.eia-lbl{font-size:.82rem;font-weight:800;color:var(--accent);margin:0 .4rem .45rem}
+.eia-bar{display:flex;align-items:center;gap:.5rem;background:var(--paper);border:2px solid var(--accent);border-radius:999px;padding:.4rem .45rem .4rem 1.2rem;box-shadow:0 0 0 4px var(--accent-light),0 8px 24px rgba(59,91,219,.25)}
+.eia-bar:focus-within{box-shadow:0 0 0 5px var(--accent-light),0 10px 28px rgba(59,91,219,.4)}
+.eia-bar input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;font-size:1rem;font-weight:600;padding:.75rem 0;outline:none}
+.eia-bar input::placeholder{color:var(--ink2);opacity:1;font-weight:500}
+.eia-bar button{border:0;border-radius:50%;width:46px;height:46px;cursor:pointer;background:var(--accent-light);font-size:1.15rem;flex:none}
+.eia-bar .go{background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(59,91,219,.45)}
+.eia-msg{font-size:.78rem;color:var(--ink2);min-height:1.1em;margin:.45rem .6rem 0}
 .eia-row{border:1.5px solid var(--line);border-radius:14px;padding:.7rem;margin-bottom:.6rem;background:var(--paper2)}
 .eia-row.off{opacity:.45}
 .eia-h{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;font-size:.78rem;font-weight:700;color:var(--ink2)}
@@ -3178,7 +3180,7 @@ body.dark-mode .fc-card-back { background: linear-gradient(145deg, #0d2010, #091
       </div>
     </div>
     <div class="home-stats" id="home-stats"></div>
-    <div class="eia" id="eia-wrap"><div class="eia-bar"><input id="eia-in" placeholder="Escribe o dicta: crea el curso redes y añade examen final el viernes" maxlength="500" onkeydown="if(event.key==='Enter')eiaGo()"><button onclick="eiaDictar()" title="Dictar">🎤</button><button class="go" onclick="eiaGo()" title="Entender con IA">✨</button></div><div class="eia-msg" id="eia-msg"></div></div>
+    <div class="eia" id="eia-wrap"><div class="eia-lbl">✨ Crea cursos y tareas escribiendo</div><div class="eia-bar"><input id="eia-in" placeholder="Ej: crea el curso redes y añade examen final el viernes" maxlength="500" onkeydown="if(event.key==='Enter')eiaGo()"><button onclick="eiaDictar()" title="Dictar">🎤</button><button class="go" onclick="eiaGo()" title="Entender con IA">✨</button></div><div class="eia-msg" id="eia-msg"></div></div>
   </div>
  <div id="home-banner-container"></div>
   <div id="ticker-wrap-container"></div>        <!-- ← ticker PRIMERO -->
