@@ -83,11 +83,11 @@ function sort(l){return [...l].sort((a,b)=>{const da=days(a.fecha),db=days(b.fec
 function why(i){const d=days(i.fecha);const h=i.hora?' a las '+String(i.hora).slice(0,5):(d<=1&&d>=0?' · todo el día':'');const w=d<0?'Vencido hace '+(-d)+(d==-1?' día':' días'):d==0?'Vence hoy'+h:d==1?'Vence mañana'+h:'En '+d+' días'+h;return w+' · importancia '+['','baja','media','alta'][i.importancia]}
 function next(f,r){const[y,m,d]=f.split('-').map(Number);if(r==='semanal')return iso(new Date(y,m-1,d+7));const ty=r==='anual'?y+1:y,tm=r==='anual'?m-1:m;const last=new Date(ty,tm+1,0).getDate();return iso(new Date(ty,tm,Math.min(d,last)))}
 let choques=[];
-const NV={alto:['#dc2626','Choque fuerte'],medio:['#d97706','Día cargado'],bajo:['#2563eb','Ojo con este día']};
+const NV={alto:['#dc2626','Conflicto de horario'],medio:['#d97706','Día cargado'],bajo:['#2563eb','Ojo con este día']};
 function choquesHtml(){
   if(!choques.length)return '';
-  return '<h3>⚠ Choques entre áreas</h3>'+choques.slice(0,5).map(c=>{
-    const n=NV[c.nivel]||NV.bajo;
+  return '<h3>⚠ Conflictos de horario</h3>'+choques.slice(0,5).map(c=>{
+    const n=[...(NV[c.nivel]||NV.bajo)];if(c.nivel==='medio'&&c.motivos.some(m=>/hora/.test(m)))n[1]='Conflicto de horario';
     return `<div class="card ch" style="--cc:${n[0]}"><span class="nv">${n[1]}</span><b>${fdate(c.fecha)}</b>`+
       c.motivos.map(m=>`<small>${esc(m)}</small>`).join('')+
       `<small>${c.items.map(i=>(i.origen==='estudio'?'📚 ':'🏡 ')+esc(i.titulo)+(i.monto?' (S/ '+Number(i.monto).toFixed(2)+')':'')).join(' · ')}</small>`+
