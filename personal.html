@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>LifeOS · Personal</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6366f1">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>
 :root{--bg:#f6f7fb;--card:#fff;--tx:#161a2b;--mut:#6b7280;--bd:#e5e7eb;--ac:#10b981;--red:#dc2626;--amb:#d97706}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1220;--card:#181c30;--tx:#eef0fa;--mut:#9aa1b8;--bd:#2a3050}}
@@ -225,5 +228,6 @@ async function planGo(){const desde=$('#pl-d').value,hasta=$('#pl-h').value,out=
    +(p.consejo?`<div class="card" style="margin-top:8px">💡 ${esc(p.consejo)}</div>`:'')+`<div style="font-size:11px;color:var(--mut);margin-top:6px">Generado con ${via}</div>`}
 (async()=>{if(!user||!user.username){render();return}$('#app').innerHTML='<div class="empty">Cargando…</div>';try{await load();render()}catch(e){$('#app').innerHTML='<div class="card empty">No se pudo conectar con la base de datos.</div>'}})();
 </script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});</script>
 </body>
 </html>
