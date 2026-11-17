@@ -157,7 +157,14 @@ async function fn(name,body){
   if(!r.ok)throw new Error(j.error||('http '+r.status));
   return j;
 }
-async function currentSub(){try{const reg=await navigator.serviceWorker.ready;return await reg.pushManager.getSubscription()}catch(e){return null}}
+async function getReg(){
+  let reg=await navigator.serviceWorker.getRegistration();
+  if(!reg)reg=await navigator.serviceWorker.register('sw.js');
+  if(reg.active)return reg;
+  await Promise.race([navigator.serviceWorker.ready,new Promise((_,j)=>setTimeout(()=>j(new Error('el Service Worker no arrancó (revisa que sw.js esté subido al repo)')),8000))]);
+  return reg;
+}
+async function currentSub(){try{const reg=await getReg();return await reg.pushManager.getSubscription()}catch(e){return null}}
 async function drawAvisos(){
   const box=$('av');if(!box)return;
   if(isIOS&&!isStandalone){box.innerHTML='<p class="note">Para recibir avisos en iPhone: primero añade LifeOS a la pantalla de inicio (Compartir → Añadir a pantalla de inicio) y ábrela desde allí.</p>';return}
@@ -167,7 +174,7 @@ async function drawAvisos(){
   if(sub){
     box.innerHTML='<p class="note ok" style="margin:0 0 8px">✓ Avisos activados en este dispositivo.</p>'+
       '<input id="av-pass" type="password" placeholder="Contraseña (para desactivar)" autocomplete="current-password">'+
-      '<div class="err" id="av-err"></div><button class="off" onclick="desactivarAvisos()">Desactivar avisos</button>';
+      '<div class="err" id="av-err"></div><button class="sec" onclick="probarLocal()">🔔 Probar en este celular</button><button class="off" style="margin-top:8px" onclick="desactivarAvisos()">Desactivar avisos</button>';
   }else{
     box.innerHTML='<input id="av-pass" type="password" placeholder="Confirma tu contraseña" autocomplete="current-password">'+
       '<div class="err" id="av-err"></div><button onclick="activarAvisos()">🔔 Activar avisos</button>'+
@@ -181,12 +188,20 @@ async function activarAvisos(){
   try{
     const perm=await Notification.requestPermission();
     if(perm!=='granted'){avErr('No diste permiso para notificaciones');drawAvisos();return}
-    const reg=await navigator.serviceWorker.ready;
+    avErr('Activando…');
+    const reg=await getReg();
     let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(VAPID_PUB)});
     await fn('lifeos-push',{modo:'suscribir',usuario:u.username,password:p,subscription:sub.toJSON(),userAgent:navigator.userAgent});
     drawAvisos();
-  }catch(e){avErr(e.message==='no autorizado'?'Contraseña incorrecta':'No se pudo activar: '+e.message)}
+  }catch(e){avErr(e.message==='no autorizado'?'Contraseña incorrecta':'No se pudo activar: '+(e.name&&e.name!=='Error'?e.name+' · ':'')+e.message)}
+}
+async function probarLocal(){
+  try{
+    const reg=await getReg();
+    await reg.showNotification('Prueba local',{body:'Si ves esto, el celular sí muestra notificaciones.',icon:'icons/icon-192.png'});
+    avErr('Notificación local lanzada. ¿Apareció?');
+  }catch(e){avErr('Falló: '+e.message)}
 }
 async function desactivarAvisos(){
   const u=getUser(),p=$('av-pass').value;
