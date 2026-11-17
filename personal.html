@@ -16,11 +16,11 @@
 :root{--ring:var(--ac);--chip-cr:#c62828;--chip-c1:#b45309;--chip-c2:#2563eb}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--chip-cr:#ff8a8a;--chip-c1:#ffc15c;--chip-c2:#8bbcff}}
 :root[data-theme="dark"]{--chip-cr:#ff8a8a;--chip-c1:#ffc15c;--chip-c2:#8bbcff}
-body{padding:max(18px,env(safe-area-inset-top)) 16px max(32px,env(safe-area-inset-bottom))}
+body{padding:max(24px,env(safe-area-inset-top)) 24px max(48px,env(safe-area-inset-bottom))}
 main{max-width:1180px;margin:0 auto}
 
 /* encabezado */
-.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:26px}
 .top span{display:flex;gap:8px;flex-wrap:wrap}
 h1{margin:6px 0 18px;font:700 clamp(30px,8vw,40px)/1.05 var(--f-head);letter-spacing:-.025em}
 h3{margin:28px 4px 12px;font:600 16px var(--f-head);color:var(--mut)}
@@ -63,7 +63,7 @@ h3{margin:28px 4px 12px;font:600 16px var(--f-head);color:var(--mut)}
 .c3{background:var(--card2);color:var(--mut)}
 
 /* conflictos de horario */
-.ch{padding:16px 20px;background:var(--card);background:color-mix(in srgb,var(--cc) 9%,var(--card));border-color:var(--card2);border-color:color-mix(in srgb,var(--cc) 38%,transparent)}
+.ch{padding:20px 24px;background:var(--card);background:color-mix(in srgb,var(--cc) 9%,var(--card));border-color:var(--card2);border-color:color-mix(in srgb,var(--cc) 38%,transparent)}
 .ch b{display:block;font:600 17px var(--f-head)}
 .ch small{display:block;color:var(--mut);margin-top:4px;line-height:1.45}
 .ch .sg{color:var(--tx);margin-top:8px}
@@ -83,50 +83,50 @@ h3{margin:28px 4px 12px;font:600 16px var(--f-head);color:var(--mut)}
 .stats b{font:700 32px/1.1 var(--f-head);display:block;margin-bottom:2px}
 
 /* ===== tablero ===== */
-.hd{display:flex;align-items:baseline;justify-content:space-between;gap:6px 16px;flex-wrap:wrap;margin:2px 0 14px}
+.hd{display:flex;align-items:baseline;justify-content:space-between;gap:6px 16px;flex-wrap:wrap;margin:8px 0 24px}
 .hd h1{margin:0}
 .hd .sub{color:var(--mut);font-size:14px}
-.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 2px}
-.strip .area{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:22px}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin:26px 0 10px}
+.strip .area{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:22px}
 .strip .area .i{width:42px;height:42px;border-radius:14px;font-size:21px;margin:0;flex:none}
 .strip .area>div:last-child{position:relative;min-width:0}
 .strip .area b{display:block;font-size:15px;line-height:1.2}
 .strip .area small{color:var(--mut);font-size:12px}
 .strip .area::before{width:70px;height:70px;right:-20px;top:-20px}
-.dash{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start}
-.dash h3{margin:22px 4px 10px}
-.side{position:sticky;top:16px;display:grid;gap:14px}
-.side h3{margin:0 0 10px}
-.side .card{padding:16px}
-.tgrid,.mini,.chgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:12px}
-.mini{gap:8px}
+.dash{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:36px;align-items:start}
+.dash h3{margin:36px 4px 16px}.dash h3:first-child{margin-top:26px}
+.side{position:sticky;top:16px;display:grid;gap:22px;margin-top:26px}
+.side h3{margin:0 0 16px}
+.side .card{padding:22px}
+.tgrid,.mini,.chgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:18px}
+.mini{gap:12px}
 .tgrid>.empty,.mini>.empty{grid-column:1/-1}
-.tk{display:flex;flex-direction:column;gap:10px;padding:14px 14px 14px 16px;border-radius:24px;border-left:5px solid var(--ib,var(--bd))}
+.tk{display:flex;flex-direction:column;gap:16px;padding:18px 18px 18px 22px;border-radius:24px;border-left:5px solid var(--ib,var(--bd))}
 .tk-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .tk .chip{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;min-width:0;padding:5px 12px;border-radius:14px;text-align:left}
 .tk .chip .a{font-size:12px}.tk .chip .h{font-size:15px}.tk .chip .h.s{font-size:12px;line-height:1.4}.tk .chip .f{font-size:11px}
 .tk .acts{display:flex;flex:none}
 .tk .x{width:32px;height:32px;font-size:15px}
-.tk-b{display:flex;gap:12px;align-items:flex-start}
+.tk-b{display:flex;gap:16px;align-items:flex-start}
 .tk .chk{flex:none;width:30px;height:30px;font-size:14px}
 .tk .t{min-width:0}
 .tk .t b{display:block;font:600 16px/1.25 var(--f-head)}
-.tk .t small{display:block;color:var(--mut);font-size:12.5px;margin-top:3px}
-.tk .pl{margin:6px 6px 0 0}
-.mn{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 12px;border-radius:18px}
+.tk .t small{display:block;color:var(--mut);font-size:12.5px;margin-top:6px}
+.tk .pl{margin:10px 8px 0 0}
+.mn{display:flex;align-items:center;gap:12px;padding:12px 10px 12px 16px;border-radius:18px}
 .mn .chk{flex:none;width:26px;height:26px;font-size:13px}
 .mn .t{flex:1;min-width:0}
 .mn .t b{display:block;font:600 14px var(--f-head);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mn .t small{display:block;color:var(--mut);font-size:12px}
 .mn .w{flex:none;font-size:12px;color:var(--mut);font-weight:600}
 .mn .x{width:30px;height:30px;font-size:14px;flex:none}
-.sum{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .sum b{display:block;font:700 26px/1.1 var(--f-head)}
 .sum small,.side .nota{color:var(--mut);font-size:12px}
-.bar{height:8px;border-radius:99px;background:var(--card2);overflow:hidden;margin:12px 0 6px}
+.bar{height:8px;border-radius:99px;background:var(--card2);overflow:hidden;margin:20px 0 10px}
 .bar i{display:block;height:100%;background:var(--ac);border-radius:99px}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
-.cal .w{font-size:11px;color:var(--mut);padding-bottom:4px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px 4px;text-align:center}
+.cal .w{font-size:11px;color:var(--mut);padding-bottom:8px}
 .cal button{position:relative;aspect-ratio:1;border:0;border-radius:12px;background:none;color:var(--tx);font:500 13px var(--f-body);cursor:pointer;padding:0}
 .cal button:hover{background:var(--card2)}
 .cal .dot::after{content:"";position:absolute;left:50%;bottom:4px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--amb)}
@@ -134,12 +134,13 @@ h3{margin:28px 4px 12px;font:600 16px var(--f-head);color:var(--mut)}
 .cal .hoy{background:var(--ac);color:var(--ac-tx);font-weight:700}
 .cal .hoy:hover{background:var(--ac)}
 .cal .hoy.dot::after{background:var(--ac-tx)}
-.pay{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--bd);font-size:14px}
+.pay{display:flex;justify-content:space-between;gap:12px;padding:14px 0;border-top:1px solid var(--bd);font-size:14px}
 .pay:first-of-type{border-top:0;padding-top:0}
 .pay b{font-weight:600}.pay small{display:block;color:var(--mut);font-size:12px}
 .pay>span:last-child{font-weight:700;white-space:nowrap}
 @media (max-width:900px){
-  .dash{grid-template-columns:1fr}
+  .dash{grid-template-columns:1fr;gap:8px}
+  .side{margin-top:0}
   .side{position:static;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));align-items:start}
 }
 
@@ -226,7 +227,7 @@ function render(){
   const pagos=pend.filter(i=>i.monto&&days(i.fecha)>=0).sort((x,y)=>x.fecha.localeCompare(y.fecha)).slice(0,4);
   $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><span><button class="btn" onclick="planOpen()">📅 Plan de hoy</button> <button class="btn p" onclick="openForm()">+ Nueva</button></span></div>
   <div class="hd"><h1>Personal</h1><span class="sub">${fdate(iso(now))} · ${pend.length} pendientes</span></div>
-  <div class="card capbar"><input id="cap" placeholder="Escribe o dicta: pagar luz el viernes 80 soles" onkeydown="if(event.key==='Enter')capture()"><button class="btn ic" onclick="dictar()" title="Dictar">🎤</button><button class="btn p ic" onclick="capture()" title="Entender con IA">✨</button></div><div id="cap-msg" style="font-size:12px;color:var(--mut);min-height:16px;margin-bottom:4px"></div>
+  <div class="card capbar"><input id="cap" placeholder="Escribe o dicta: pagar luz el viernes 80 soles" onkeydown="if(event.key==='Enter')capture()"><button class="btn ic" onclick="dictar()" title="Dictar">🎤</button><button class="btn p ic" onclick="capture()" title="Entender con IA">✨</button></div><div id="cap-msg" style="font-size:12px;color:var(--mut);min-height:16px;margin-bottom:0"></div>
   <div class="strip">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><div><b>${esc(a.nombre)}</b><small>${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div></div>`).join('')}</div>
   <div class="dash"><div class="mainc"><div id="choques">${choquesHtml()}</div>
     <h3>Qué hacer primero</h3><div class="tgrid">${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}</div>
