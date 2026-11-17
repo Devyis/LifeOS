@@ -192,7 +192,7 @@ async function capture(){
   console.log('%c5) RESPUESTA FINAL DE: '+(iaOk?modelo:'código local (la API falló)'),'font-weight:bold;background:#10b981;color:#fff;padding:2px 6px;border-radius:4px');
   console.table(fuente);
   console.groupEnd();
-  m.textContent=iaOk?'Revisa y guarda ✓ · IA: '+modelo+' · área: '+(quien.startsWith('API')?'IA':'respaldo local'):'Sin IA por ahora: lectura básica. Revisa los datos.';
+  m.textContent=iaOk?'Revisa los datos y guarda ✓':'Sin IA por ahora: lectura básica. Revisa los datos.';
   const ok=(v,a,d)=>a.includes(v)?v:d;
   openForm(null,{titulo:String(r.titulo).slice(0,120),area_id,categoria:ok(r.categoria,CATS,'otro'),fecha:/^\d{4}-\d\d-\d\d$/.test(r.fecha)?r.fecha:iso(now),hora:r.hora||'',importancia:ok(+r.importancia,[1,2,3],2),esfuerzo:ok(+r.esfuerzo,[1,2,3],2),monto:r.monto>0?r.monto:null,repite:ok(r.repite,['no','semanal','mensual','anual'],'no'),notas:r.notas||''})
 }
