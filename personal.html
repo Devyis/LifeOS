@@ -3,304 +3,232 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>LifeOS</title>
+<title>LifeOS · Personal</title>
+<link rel="icon" type="image/png" href="icons/favicon-64.png">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#6366f1">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>
-:root{--bg:#f6f7fb;--card:#fff;--tx:#161a2b;--mut:#6b7280;--bd:#e5e7eb}
+:root{--bg:#f6f7fb;--card:#fff;--tx:#161a2b;--mut:#6b7280;--bd:#e5e7eb;--ac:#10b981;--red:#dc2626;--amb:#d97706}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1220;--card:#181c30;--tx:#eef0fa;--mut:#9aa1b8;--bd:#2a3050}}
 :root[data-theme="dark"]{--bg:#0f1220;--card:#181c30;--tx:#eef0fa;--mut:#9aa1b8;--bd:#2a3050}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh;padding:max(24px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom))}
-main{max-width:760px;margin:0 auto}
-h1{margin:0;font-size:28px}
-.sub{color:var(--mut);margin:6px 0 24px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
-a.card{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:22px;border-top:5px solid var(--c);transition:transform .15s}
-a.card:hover{transform:translateY(-3px)}
-.ic{font-size:34px}
-.card h2{margin:10px 0 4px;font-size:20px}
-.card p{margin:0;color:var(--mut);font-size:14px;line-height:1.4}
-.tag{display:inline-block;margin-top:12px;font-size:12px;padding:3px 10px;border-radius:99px;background:var(--bg);color:var(--mut)}
-.soon{opacity:.75}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,sans-serif;padding:max(16px,env(safe-area-inset-top)) 14px max(24px,env(safe-area-inset-bottom))}
+main{max-width:720px;margin:0 auto}
+a{color:inherit}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+h1{margin:0;font-size:22px}h3{margin:18px 0 8px;font-size:14px;color:var(--mut);font-weight:600}
+.btn{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
+a.btn{text-decoration:none;display:inline-block}
+.btn.back{background:#10b981;border-color:#10b981;color:#fff;font-weight:700;box-shadow:0 2px 8px rgba(16,185,129,.35)}
+.btn.p{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px}
+.row{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.row .t{flex:1;min-width:0}.row b{display:block}.row small{color:var(--mut)}
+.row.red{border-left:4px solid var(--red)}.row.amb{border-left:4px solid var(--amb)}.row.ok{border-left:4px solid var(--bd)}
+.chk{width:26px;height:26px;border-radius:50%;border:2px solid var(--bd);background:none;cursor:pointer;color:var(--ac);font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.area{cursor:pointer;border-top:4px solid var(--c)}.area .i{font-size:24px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stats b{font-size:20px;display:block}
+.empty{color:var(--mut);padding:14px;text-align:center}
+dialog{border:1px solid var(--bd);border-radius:16px;background:var(--card);color:var(--tx);width:min(440px,92vw);padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}
+input,select,textarea{width:100%;padding:9px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx);font:inherit}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.x{color:var(--mut);background:none;border:0;cursor:pointer;font-size:18px}
 
-.auth{margin-top:22px;background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:20px;max-width:420px}
-.auth h3{margin:0 0 12px;font-size:17px}
-.auth input{width:100%;padding:10px;margin-bottom:8px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
-.auth button{width:100%;padding:11px;border:0;border-radius:10px;background:#6366f1;color:#fff;font:600 15px system-ui;cursor:pointer}
-.auth .lnk{background:none;color:var(--mut);font:14px system-ui;margin-top:8px;text-decoration:underline}
-.auth .err{color:#dc2626;font-size:13px;min-height:18px;margin:2px 0}
-
-.tabs{display:flex;gap:8px;margin:0 0 18px}
-.tabs button{padding:8px 16px;border:1px solid var(--bd);border-radius:99px;background:var(--card);color:var(--tx);font:600 14px system-ui;cursor:pointer}
-.tabs button.on{background:#6366f1;color:#fff;border-color:#6366f1}
-.auth .sec{background:var(--bg);color:var(--tx);border:1px solid var(--bd);margin-top:8px}
-.auth .off{background:none;color:var(--mut);border:1px solid var(--bd)}
-.note{font-size:13px;color:var(--mut);margin:8px 0 0;line-height:1.4}
-#mant{display:none}
-.mp{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:18px;margin-bottom:14px}
-.mp h3{margin:0 0 10px;font-size:17px}
-.mp input,.mp select,.mp textarea{width:100%;padding:10px;margin-bottom:8px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
-.mp button{padding:10px 16px;border:0;border-radius:10px;background:#6366f1;color:#fff;font:600 14px system-ui;cursor:pointer;margin:0 6px 6px 0}
-.mp button.g{background:var(--bg);color:var(--tx);border:1px solid var(--bd)}
-.mp button:disabled{opacity:.5}
-.row{padding:9px 0;border-top:1px solid var(--bd);font-size:14px;line-height:1.4}
-.row:first-child{border-top:0}
-.row small{color:var(--mut);display:block}
-.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;background:var(--bg);border:1px solid var(--bd);margin-left:6px}
-.ok{color:#059669}.bad{color:#dc2626}.warn{color:#d97706}
+.pl{display:inline-block;font-size:12px;padding:2px 9px;border-radius:99px;margin:5px 5px 0 0}
+.pm{background:rgba(16,185,129,.16);color:#059669;font-weight:700}
+.pg{background:var(--bg);color:var(--mut)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pm{color:#34d399}}
+:root[data-theme="dark"] .pm{color:#34d399}
+.chip{flex:none;text-align:center;border-radius:12px;padding:6px 10px;min-width:88px}
+.chip .a{display:block;font-size:12px;font-weight:700}
+.chip .h{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.chip .h.s{font-size:12px;font-weight:600;line-height:1.7}
+.chip .f{display:block;font-size:11px;opacity:.85}
+.cr{background:rgba(220,38,38,.15);color:#dc2626}
+.c1{background:rgba(217,119,6,.16);color:#d97706}
+.c2{background:rgba(59,130,246,.15);color:#2563eb}
+.c3{background:var(--bg);color:var(--mut)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cr{color:#f87171}:root:not([data-theme="light"]) .c1{color:#fbbf24}:root:not([data-theme="light"]) .c2{color:#60a5fa}}
+:root[data-theme="dark"] .cr{color:#f87171}:root[data-theme="dark"] .c1{color:#fbbf24}:root[data-theme="dark"] .c2{color:#60a5fa}
 </style>
 </head>
 <body>
-<main>
-  <h1 id="hi">LifeOS</h1>
-  <div class="tabs" id="tabs" style="display:none"></div>
-  <div id="home">
-  <p class="sub">Elige un área para ver tus pendientes y saber qué hacer primero.</p>
-  <div class="grid">
-    <a class="card" style="--c:#6366f1" href="estudio">
-      <div class="ic">📚</div><h2>Estudio</h2>
-      <p>Tareas, exposiciones y exámenes de tus cursos, con modo estudio e IA.</p>
-      <span class="tag">Disponible</span>
-    </a>
-    <a class="card soon" style="--c:#f59e0b" href="trabajo">
-      <div class="ic">💼</div><h2>Trabajo</h2>
-      <p>Entregables, reuniones y proyectos con su fecha y hora límite.</p>
-      <span class="tag">Próximamente</span>
-    </a>
-    <a class="card" style="--c:#10b981" href="personal">
-      <div class="ic">🏡</div><h2>Vida personal</h2>
-      <p>Trámites, pagos, citas y compromisos del día a día.</p>
-      <span class="tag">Disponible</span>
-    </a>
-  </div>
-  <div class="auth" id="auth"></div>
-  </div>
-  <section id="mant"></section>
-</main>
+<main id="app"></main>
+<dialog id="dlg"></dialog>
 <script>
-try{
-  var t=localStorage.getItem('theme');
-  if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);
-}catch(e){}
-</script>
-<script>
-const SB='https://syeuxondhnartyizvsqb.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5ZXV4b25kaG5hcnR5aXp2c3FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MDU5NjksImV4cCI6MjEwNjk4MTk2OX0.S8cXt1awb_AQoQ6Q1ynaqh4D2FVtux2yTxXbpeiJNtg';
-const VAPID_PUB='BCE3x2Ggh79wy5iNUNpbEx_aSvi7Lxo3TeklHAuSrBxNLTa8jhCWdW25EU4lgFjfg_y42H0BJmLoyh_6XM0McmA';
-const HD={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
-let mode='login',adminPass='',tab='home';
-const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const $=id=>document.getElementById(id);
-function getUser(){try{return JSON.parse(localStorage.getItem('lifeos_user'))}catch(e){return null}}
-function setErr(m){const e=$('au-err');if(e)e.textContent=m||''}
+const URL_='https://syeuxondhnartyizvsqb.supabase.co', KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5ZXV4b25kaG5hcnR5aXp2c3FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MDU5NjksImV4cCI6MjEwNjk4MTk2OX0.S8cXt1awb_AQoQ6Q1ynaqh4D2FVtux2yTxXbpeiJNtg';
+const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:'return=representation'};
+const api=async(p,o={})=>{const r=await fetch(URL_+'/rest/v1/'+p,{headers:H,...o});if(!r.ok)throw new Error(await r.text());return r.status===204?null:r.json()};
+const DEF=[['Salud','🩺','#ef4444'],['Hogar','🏠','#3b82f6'],['Finanzas','💳','#10b981'],['Trámites','📄','#f59e0b'],['Familia y social','👨‍👩‍👧','#8b5cf6']];
+const CATS=['cita','pago','trámite','compromiso','otro'];
+let user,areas=[],items=[],view=null;
+try{const t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}
+try{user=JSON.parse(localStorage.getItem('lifeos_user'))}catch(e){}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const days=f=>{const[y,m,d]=f.split('-').map(Number);const a=new Date(y,m-1,d),n=new Date();n.setHours(0,0,0,0);return Math.round((a-n)/864e5)};
+function score(i){const d=days(i.fecha);const u=d<=0?10:d<=2?8:d<=7?5:d<=30?3:1;return u*2+i.importancia*2+i.esfuerzo}
+function sort(l){return [...l].sort((a,b)=>{const da=days(a.fecha),db=days(b.fecha);if(da<0||db<0){if(da<0&&db<0)return da-db;return da<0?-1:1}return score(b)-score(a)||da-db})}
+function why(i){const d=days(i.fecha);const h=i.hora?' a las '+String(i.hora).slice(0,5):(d<=1&&d>=0?' · todo el día':'');const w=d<0?'Vencido hace '+(-d)+(d==-1?' día':' días'):d==0?'Vence hoy'+h:d==1?'Vence mañana'+h:'En '+d+' días'+h;return w+' · importancia '+['','baja','media','alta'][i.importancia]}
+function next(f,r){const[y,m,d]=f.split('-').map(Number);if(r==='semanal')return iso(new Date(y,m-1,d+7));const ty=r==='anual'?y+1:y,tm=r==='anual'?m-1:m;const last=new Date(ty,tm+1,0).getDate();return iso(new Date(ty,tm,Math.min(d,last)))}
+async function load(){
+  const u=encodeURIComponent(user.username);
+  areas=await api('personal_areas?username=eq.'+u+'&order=orden');
+  if(!areas.length){areas=await api('personal_areas',{method:'POST',body:JSON.stringify(DEF.map((a,i)=>({username:user.username,nombre:a[0],icono:a[1],color:a[2],orden:i})))})}
+  items=await api('personal_items?username=eq.'+u+'&order=fecha');
+}
+const DN=['dom','lun','mar','mié','jue','vie','sáb'],MN=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function fdate(f){const[y,m,d]=f.split('-').map(Number);const t=new Date(y,m-1,d);return DN[t.getDay()]+' '+d+' '+MN[m-1]}
+function chip(i){const d=days(i.fecha),h=i.hora?String(i.hora).slice(0,5):'';const cl=d<0?'cr':d<=1?'c1':d<=7?'c2':'c3';let a,b,bs=false,f;
+  if(d<0){a='Vencido';b='hace '+(-d)+(d==-1?' día':' días');bs=true;f=h?'a las '+h:'todo el día'}
+  else{a=d==0?'Hoy':d==1?'Mañana':'En '+d+' días';if(h)b=h;else{b='Todo el día';bs=true}f=fdate(i.fecha)}
+  return `<div class="chip ${cl}"><span class="a">${a}</span><span class="h${bs?' s':''}">${b}</span><span class="f">${f}</span></div>`}
+function row(i){const a=areas.find(x=>x.id===i.area_id)||{};
+  const pills=(i.monto?`<span class="pl pm">S/ ${Number(i.monto).toFixed(2)}</span>`:'')+(i.repite!=='no'?`<span class="pl pg">↻ ${i.repite}</span>`:'');
+  return `<div class="card row"><button class="chk" title="Marcar como hecha" onclick="done(${i.id})">✓</button><div class="t"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')} · ${i.categoria} · importancia ${['','baja','media','alta'][i.importancia]}</small>${pills?'<div>'+pills+'</div>':''}</div>${chip(i)}<button class="x" title="Editar" onclick="edit(${i.id})">✏️</button><button class="x" title="Eliminar" onclick="del(${i.id})">🗑</button></div>`}
+function render(){
+  if(!user||!user.username){$('#app').innerHTML='<div class="card empty">Inicia sesión primero en el menú de LifeOS y vuelve aquí.<br><br><a class="btn back" href="./">← Ir al menú</a></div>';return}
+  const pend=items.filter(i=>!i.hecho);
+  if(view){const a=areas.find(x=>x.id===view);const l=sort(pend.filter(i=>i.area_id===view));
+    $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Personal</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><h1>${a.icono} ${esc(a.nombre)}</h1><h3>Pendientes (${l.length})</h3>${l.map(row).join('')||'<div class="card empty">Nada pendiente aquí.</div>'}`;return}
+  const top=sort(pend).slice(0,3);const now=new Date();const ym=iso(now).slice(0,7);
+  const porPagar=pend.filter(i=>i.monto&&i.fecha.startsWith(ym)).reduce((s,i)=>s+Number(i.monto),0);
+  const hechasMes=items.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)).length;
+  $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><span><button class="btn" onclick="planOpen()">📅 Plan de hoy</button> <button class="btn p" onclick="openForm()">+ Nueva</button></span></div><h1 style="margin-bottom:6px">Personal</h1><div class="card" style="display:flex;gap:6px;margin-bottom:4px"><input id="cap" placeholder="Escribe o dicta: pagar luz el viernes 80 soles" onkeydown="if(event.key==='Enter')capture()"><button class="btn" onclick="dictar()" title="Dictar">🎤</button><button class="btn p" onclick="capture()" title="Entender con IA">✨</button></div><div id="cap-msg" style="font-size:12px;color:var(--mut);min-height:16px;margin-bottom:4px"></div>
+  <h3>Qué hacer primero</h3>${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}
+  <h3>Tus áreas</h3><div class="grid">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><b>${esc(a.nombre)}</b><br><small style="color:var(--mut)">${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div>`).join('')}</div>
+  <h3>Resumen del mes</h3><div class="stats"><div class="card"><b>S/ ${porPagar.toFixed(2)}</b><small style="color:var(--mut)">por pagar este mes</small></div><div class="card"><b>${hechasMes}</b><small style="color:var(--mut)">actividades cumplidas</small></div></div>`}
+let editId=null;
+function edit(id){const it=items.find(x=>x.id===id);if(it)openForm(null,it)}
+function openForm(aid,it){editId=it&&it.id?it.id:null;const v=it||{};const d=$('#dlg');
+  const sel=(a,b)=>String(a)===String(b)?'selected':'';
+  d.innerHTML=`<div class="top"><b>${editId?'Editar actividad':'Nueva actividad'}</b><button class="x" onclick="$('#dlg').close()">✕</button></div>
+  <label>Título</label><input id="f-t" placeholder="Pagar recibo de agua" value="${esc(v.titulo||'')}">
+  <div class="two"><div><label>Área</label><select id="f-a">${areas.map(a=>`<option value="${a.id}" ${sel(a.id,it?it.area_id:aid)}>${a.icono} ${esc(a.nombre)}</option>`).join('')}</select></div><div><label>Categoría</label><select id="f-c">${CATS.map(c=>`<option ${sel(c,v.categoria)}>${c}</option>`).join('')}</select></div></div>
+  <div class="two"><div><label>Fecha límite</label><input id="f-f" type="date" value="${v.fecha||iso(new Date())}"></div><div><label>Hora (opcional)</label><input id="f-h" type="time" value="${v.hora?String(v.hora).slice(0,5):''}"></div></div>
+  <div class="two"><div><label>Importancia</label><select id="f-i"><option value="1" ${sel(1,v.importancia)}>Baja</option><option value="2" ${sel(2,v.importancia||2)}>Media</option><option value="3" ${sel(3,v.importancia)}>Alta</option></select></div><div><label>Esfuerzo</label><select id="f-e"><option value="1" ${sel(1,v.esfuerzo)}>Poco</option><option value="2" ${sel(2,v.esfuerzo||2)}>Medio</option><option value="3" ${sel(3,v.esfuerzo)}>Mucho</option></select></div></div>
+  <div class="two"><div><label>Monto (S/)</label><input id="f-m" type="number" step="0.01" min="0" value="${v.monto??''}"></div><div><label>Se repite</label><select id="f-r">${['no','semanal','mensual','anual'].map(r=>`<option value="${r}" ${sel(r,v.repite||'no')}>${r==='no'?'No':r[0].toUpperCase()+r.slice(1)}</option>`).join('')}</select></div></div>
+  <label>Notas</label><textarea id="f-n" rows="2">${esc(v.notas||'')}</textarea>
+  <p id="f-err" style="color:var(--red);font-size:13px;margin:8px 0 0"></p>
+  <button class="btn p" style="width:100%;margin-top:10px" onclick="save()">${editId?'Guardar cambios':'Guardar actividad'}</button>`;d.showModal()}
+async function save(){const t=$('#f-t').value.trim(),f=$('#f-f').value;if(!t||!f){$('#f-err').textContent='Escribe un título y una fecha.';return}
+  const m=$('#f-m').value;
+  const body={area_id:+$('#f-a').value,titulo:t,categoria:$('#f-c').value,fecha:f,hora:$('#f-h').value||null,importancia:+$('#f-i').value,esfuerzo:+$('#f-e').value,monto:m?+m:null,repite:$('#f-r').value,notas:$('#f-n').value};
+  try{
+    if(editId){const r=await api('personal_items?id=eq.'+editId,{method:'PATCH',body:JSON.stringify(body)});const k=items.findIndex(x=>x.id===editId);if(k>=0&&r[0])items[k]=r[0]}
+    else{const r=await api('personal_items',{method:'POST',body:JSON.stringify({username:user.username,...body})});items.push(...r)}
+    $('#dlg').close();render()}catch(e){$('#f-err').textContent='No se pudo guardar. Intenta de nuevo.'}}
+async function done(id){const i=items.find(x=>x.id===id);if(!i)return;
+  try{await api('personal_items?id=eq.'+id,{method:'PATCH',body:JSON.stringify({hecho:true,hecho_en:new Date().toISOString()})});i.hecho=true;i.hecho_en=new Date().toISOString();
+    if(i.repite!=='no'){const r=await api('personal_items',{method:'POST',body:JSON.stringify({username:i.username,area_id:i.area_id,titulo:i.titulo,categoria:i.categoria,fecha:next(i.fecha,i.repite),hora:i.hora,importancia:i.importancia,esfuerzo:i.esfuerzo,monto:i.monto,repite:i.repite,notas:i.notas})});items.push(...r)}
+    render()}catch(e){alert('No se pudo actualizar.')}}
+async function del(id){if(!confirm('¿Eliminar esta actividad?'))return;try{await api('personal_items?id=eq.'+id,{method:'DELETE'});items=items.filter(x=>x.id!==id);render()}catch(e){alert('No se pudo eliminar.')}}
 
-/* ---------- SERVICE WORKER ---------- */
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
-
-/* ---------- AUTH ---------- */
-function drawAuth(){
-  const u=getUser(),box=$('auth');
-  $('hi').textContent=u&&(u.displayName||u.username)?'Hola, '+(u.displayName||u.username):'LifeOS';
-  drawTabs();
-  if(u&&u.username){
-    box.innerHTML='<h3>Sesión iniciada</h3><p style="margin:0 0 12px;color:var(--mut)">Entraste como <b>'+esc(u.displayName||u.username)+'</b>. Tu sesión es de LifeOS.</p>'+
-      '<div id="av"></div><button onclick="logout()" style="margin-top:8px">Cerrar sesión</button>';
-    drawAvisos();return;
+/* ===== IA: captura en lenguaje natural + plan de hoy ===== */
+const WD=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+async function ia(b){const r=await fetch(URL_+'/functions/v1/lifeos-ia',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(b)});const j=await r.json();if(j.error)throw new Error(j.error);return j}
+function dmf(l){const now=new Date();let off=0,b=l.match(/\b(?:el\s+)?(?:d[ií]a\s+)?(\d{1,2})\s+(?:de\s+|del\s+)?(este\s+mes|mes\s+actual|(?:el\s+)?(?:pr[oó]ximo|siguiente)\s+mes|mes\s+que\s+viene)/);
+  if(b){off=/pr[oó]ximo|siguiente|viene/.test(b[2])?1:0}
+  else{b=l.match(/\bd[ií]a\s+(\d{1,2})\b(?!\s*de\s)/)||l.match(/\bel\s+(\d{1,2})\b(?!\s*(?:de\s|\/|:|am|pm|h\b|soles?))/);if(b&&+b[1]<now.getDate())off=1}
+  if(!b)return null;const d=+b[1];if(d<1||d>31)return null;
+  const base=new Date(now.getFullYear(),now.getMonth()+off,1),y=base.getFullYear(),m=base.getMonth();
+  return iso(new Date(y,m,Math.min(d,new Date(y,m+1,0).getDate())))}
+function localParse(t){const now=new Date(),l=t.toLowerCase(),add=n=>iso(new Date(now.getFullYear(),now.getMonth(),now.getDate()+n));let f=iso(now);
+  if(/pasado mañana/.test(l))f=add(2);else if(/mañana/.test(l))f=add(1);
+  else if(dmf(l))f=dmf(l);
+  else{const k=WD.findIndex(w=>l.includes(w)||l.includes(w.normalize('NFD').replace(/[\u0300-\u036f]/g,'')));if(k>=0)f=add((k-now.getDay()+7)%7||7)}
+  const m=l.match(/s\/\.?\s*(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)\s*soles?|(?:cuesta|cuestan|costo|costó|son|total)\s*(?:de\s*)?(\d+(?:[.,]\d+)?)/),monto=m?parseFloat((m[1]||m[2]||m[3]).replace(',','.')):null;
+  const h=l.match(/(\d{1,2})(?::(\d\d))?\s*(am|pm)\b/),hora=h?pad((+h[1]%12)+(h[3]==='pm'?12:0))+':'+(h[2]||'00'):'';
+  const cat=/pag|recibo|luz|agua|alquiler/.test(l)?'pago':/cita|doctor|dentista|médico/.test(l)?'cita':/trámite|dni|renov/.test(l)?'trámite':'otro';
+  const titulo=t.replace(/\s*(el\s+)?(d[ií]a\s+)?\d{1,2}\s+(de\s+|del\s+)?(este\s+mes|mes\s+actual|(el\s+)?(pr[oó]ximo|siguiente)\s+mes|mes\s+que\s+viene)/gi,'').replace(/\s*(el )?d[ií]a\s+\d{1,2}\b/gi,'').replace(/\s*(cuesta|cuestan|costo|costó)\s*(de\s*)?(s\/\.?\s*)?\d+([.,]\d+)?(\s*soles?)?/gi,'').replace(/\s*(el |para )?(lunes|martes|miércoles|jueves|viernes|sábado|domingo|pasado mañana|mañana|hoy)/gi,'').replace(/s\/\.?\s*\d+([.,]\d+)?|\d+([.,]\d+)?\s*soles?/gi,'').replace(/\s+/g,' ').trim();
+  return{dm:!!dmf(l),titulo:titulo||t,fecha:f,hora,monto,categoria:cat,importancia:monto||cat==='pago'?3:2,esfuerzo:2,repite:'no'}}
+function guessArea(t,c){const l=(t+' '+(c||'')).toLowerCase(),by=re=>areas.find(a=>re.test(a.nombre.toLowerCase()));
+  return(/pag|recibo|luz|agua|internet|alquiler|tarjeta|deuda|cuota|dinero/.test(l)&&by(/finanz/))||(/cita|doctor|dentista|médic|medic|pastilla|vacuna|salud/.test(l)&&by(/salud/))||(/trámite|tramite|dni|renov|document|sunat|municip/.test(l)&&by(/tr[aá]mite/))||(/casa|hogar|limpi|arregl|gas|mantenim/.test(l)&&by(/hogar/))||(/cumple|familia|amig|regalo|reuni|fiesta|salir|salida|paseo|cine|concierto|social|visita|viaje|discoteca|karaoke|boda/.test(l)&&by(/familia/))||null}
+async function capture(){
+  const t=$('#cap').value.trim();if(!t)return;
+  const m=$('#cap-msg'),now=new Date();m.textContent='Entendiendo…';
+  const fuente={},CAMPOS=['titulo','categoria','fecha','hora','importancia','esfuerzo','monto','repite'];
+  console.group('%c[LifeOS] Captura: "'+t+'"','font-weight:bold;color:#10b981');
+  const payload={modo:'captura',texto:t,hoy:iso(now),dia:WD[now.getDay()],areas:areas.map(a=>({id:a.id,nombre:a.nombre}))};
+  console.log('1) Enviado a la API:',payload);
+  let resp=null,r=null,iaOk=false;
+  try{
+    resp=await ia(payload);
+    console.log('2) Respuesta CRUDA de la API:',resp);
+    r=resp.resultado;iaOk=!!(r&&r.titulo);
+  }catch(e){console.warn('2) La API falló:',e.message)}
+  const modelo=resp&&resp.modelo?(resp.proveedor?resp.proveedor+' / ':'')+resp.modelo:null;
+  if(resp&&resp.intentos)console.table(resp.intentos);
+  if(iaOk){
+    console.log('%c   🤖 Modelo que respondió: '+modelo,'font-weight:bold;color:#10b981');
+    console.log('   💭 Razonamiento de la IA:',r.razonamiento||'(la IA no dio razonamiento)');
+    if(resp.correcciones&&Object.keys(resp.correcciones).length)console.log('   🔧 Correcciones del servidor (solo huecos):',resp.correcciones);
   }
-  const reg=mode==='register';
-  box.innerHTML='<h3>'+(reg?'Crear cuenta':'Iniciar sesión')+'</h3>'+
-   (reg?'<input id="au-name" placeholder="Tu nombre" autocomplete="name">':'')+
-   '<input id="au-user" placeholder="Usuario" autocomplete="username" autocapitalize="none">'+
-   '<input id="au-pass" type="password" placeholder="Contraseña" autocomplete="'+(reg?'new-password':'current-password')+'">'+
-   '<div class="err" id="au-err"></div>'+
-   '<button onclick="'+(reg?'register()':'login()')+'">'+(reg?'Crear cuenta':'Entrar')+'</button>'+
-   '<button class="lnk" onclick="mode=\''+(reg?'login':'register')+'\';drawAuth()">'+(reg?'Ya tengo cuenta':'Crear una cuenta nueva')+'</button>';
-}
-function save(u,name,avatar,admin){localStorage.setItem('lifeos_user',JSON.stringify({username:u,displayName:name,avatarUrl:avatar||'',isAdmin:!!admin}));drawAuth()}
-async function rpc(fn,args){
-  const r=await fetch(SB+'/rest/v1/rpc/'+fn,{method:'POST',headers:HD,body:JSON.stringify(args)});
-  if(!r.ok)throw new Error('http '+r.status);
-  return r.json();
-}
-async function login(){
-  const u=$('au-user').value.trim().toLowerCase(),p=$('au-pass').value;
-  if(!u||!p){setErr('Completa todos los campos');return}
-  try{
-    const row=await rpc('lifeos_login',{p_username:u,p_password:p});
-    if(!row){setErr('Usuario o contraseña incorrectos');return}
-    save(row.username,row.display_name,row.avatar_url,row.is_admin);
-  }catch(e){setErr('No se pudo conectar. Intenta de nuevo')}
-}
-async function register(){
-  const n=$('au-name').value.trim(),u=$('au-user').value.trim().toLowerCase(),p=$('au-pass').value;
-  if(!n||!u||!p){setErr('Completa todos los campos');return}
-  if(u.length<3){setErr('El usuario debe tener al menos 3 caracteres');return}
-  if(p.length<4){setErr('La contraseña debe tener al menos 4 caracteres');return}
-  try{
-    const row=await rpc('lifeos_register',{p_username:u,p_password:p,p_display:n});
-    if(row.error==='exists'){setErr('Ese usuario ya existe');return}
-    if(row.error){setErr('Datos no válidos');return}
-    save(row.username,row.display_name,'',false);
-  }catch(e){setErr('No se pudo crear la cuenta')}
-}
-function logout(){localStorage.removeItem('lifeos_user');adminPass='';tab='home';mode='login';drawAuth();showTab()}
-
-/* ---------- AVISOS (PUSH) ---------- */
-const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-const isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-function pushOk(){return 'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window}
-function b64(s){const p='='.repeat((4-s.length%4)%4),r=(s+p).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(r);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
-async function fn(name,body){
-  const r=await fetch(SB+'/functions/v1/'+name,{method:'POST',headers:HD,body:JSON.stringify(body)});
-  const j=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(j.error||('http '+r.status));
-  return j;
-}
-async function getReg(){
-  let reg=await navigator.serviceWorker.getRegistration();
-  if(!reg)reg=await navigator.serviceWorker.register('sw.js');
-  if(reg.active)return reg;
-  await Promise.race([navigator.serviceWorker.ready,new Promise((_,j)=>setTimeout(()=>j(new Error('el Service Worker no arrancó (revisa que sw.js esté subido al repo)')),8000))]);
-  return reg;
-}
-async function currentSub(){try{const reg=await getReg();return await reg.pushManager.getSubscription()}catch(e){return null}}
-async function drawAvisos(){
-  const box=$('av');if(!box)return;
-  if(isIOS&&!isStandalone){box.innerHTML='<p class="note">Para recibir avisos en iPhone: primero añade LifeOS a la pantalla de inicio (Compartir → Añadir a pantalla de inicio) y ábrela desde allí.</p>';return}
-  if(!pushOk()){box.innerHTML='<p class="note">Este navegador no admite notificaciones.</p>';return}
-  if(Notification.permission==='denied'){box.innerHTML='<p class="note warn">Las notificaciones están bloqueadas. Actívalas desde los ajustes del navegador o del sitio.</p>';return}
-  const sub=await currentSub();
-  if(sub){
-    box.innerHTML='<p class="note ok" style="margin:0 0 8px">✓ Avisos activados en este dispositivo.</p>'+
-      '<input id="av-pass" type="password" placeholder="Contraseña (para desactivar)" autocomplete="current-password">'+
-      '<div class="err" id="av-err"></div><button class="off" onclick="desactivarAvisos()">Desactivar avisos</button>';
+  const lp=localParse(t);
+  if(iaOk){
+    CAMPOS.forEach(k=>fuente[k]='API ('+modelo+')');
+    if(resp.correcciones){['monto','fecha'].forEach(k=>{if(resp.correcciones[k])fuente[k]='servidor (regex) sobre API'})}
+    // Respaldo en el navegador: SOLO si la API dejó el campo vacío/inválido
+    if(!(+r.monto>0)&&lp.monto){r.monto=lp.monto;fuente.monto='código local (respaldo)';console.log('   🔧 monto vacío en la API → completado por código local:',lp.monto)}
+    if(lp.dm&&(!/^\d{4}-\d\d-\d\d$/.test(r.fecha||'')||r.fecha===iso(now))){r.fecha=lp.fecha;fuente.fecha='código local (respaldo)';console.log('   🔧 fecha vacía/hoy en la API → código local:',lp.fecha)}
   }else{
-    box.innerHTML='<input id="av-pass" type="password" placeholder="Confirma tu contraseña" autocomplete="current-password">'+
-      '<div class="err" id="av-err"></div><button onclick="activarAvisos()">🔔 Activar avisos</button>'+
-      '<p class="note">Te avisaremos 1 día antes de un pago con monto y cuando un pendiente venza.</p>';
+    console.warn('3) La API no dio respuesta usable → TODO lo decide el código local (respaldo)');
+    r=lp;CAMPOS.forEach(k=>fuente[k]='código local (respaldo)');
   }
-}
-function avErr(m){const e=$('av-err');if(e)e.textContent=m||''}
-async function activarAvisos(){
-  const u=getUser(),p=$('av-pass').value;
-  if(!p){avErr('Escribe tu contraseña');return}
-  try{
-    const perm=await Notification.requestPermission();
-    if(perm!=='granted'){avErr('No diste permiso para notificaciones');drawAvisos();return}
-    avErr('Activando…');
-    const reg=await getReg();
-    let sub=await reg.pushManager.getSubscription();
-    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(VAPID_PUB)});
-    await fn('lifeos-push',{modo:'suscribir',usuario:u.username,password:p,subscription:sub.toJSON(),userAgent:navigator.userAgent});
-    drawAvisos();
-  }catch(e){avErr(e.message==='no autorizado'?'Contraseña incorrecta':'No se pudo activar: '+(e.name&&e.name!=='Error'?e.name+' · ':'')+e.message)}
-}
-async function desactivarAvisos(){
-  const u=getUser(),p=$('av-pass').value;
-  if(!p){avErr('Escribe tu contraseña');return}
-  try{
-    const sub=await currentSub();
-    if(sub){await fn('lifeos-push',{modo:'desuscribir',usuario:u.username,password:p,endpoint:sub.endpoint});await sub.unsubscribe()}
-    drawAvisos();
-  }catch(e){avErr(e.message==='no autorizado'?'Contraseña incorrecta':'No se pudo desactivar')}
-}
-
-/* ---------- PESTAÑAS ---------- */
-function drawTabs(){
-  const u=getUser(),t=$('tabs');
-  if(!(u&&u.isAdmin)){t.style.display='none';t.innerHTML='';if(tab!=='home'){tab='home';showTab()}return}
-  t.style.display='flex';
-  t.innerHTML='<button class="'+(tab==='home'?'on':'')+'" onclick="goTab(\'home\')">Inicio</button><button class="'+(tab==='mant'?'on':'')+'" onclick="goTab(\'mant\')">🛠 Mantenimiento</button>';
-}
-function goTab(t){tab=t;drawTabs();showTab();if(t==='mant')drawMant()}
-function showTab(){$('home').style.display=tab==='home'?'':'none';$('mant').style.display=tab==='mant'?'block':'none'}
-
-/* ---------- MANTENIMIENTO (admin) ---------- */
-// Solo comodidad visual: cada acción la valida el servidor (lifeos-admin).
-async function adm(accion,extra){
-  const u=getUser();
-  return fn('lifeos-admin',Object.assign({usuario:u.username,password:adminPass,accion:accion},extra||{}));
-}
-function fmt(d){return d?new Date(d).toLocaleString('es-PE',{dateStyle:'short',timeStyle:'short'}):'—'}
-function drawMant(){
-  const m=$('mant');
-  if(!adminPass){
-    m.innerHTML='<div class="mp"><h3>Acceso de administrador</h3><p class="note" style="margin-top:0">Confirma tu contraseña. No se guarda; solo vive mientras esta página esté abierta.</p>'+
-      '<input id="m-pass" type="password" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')unlockMant()">'+
-      '<div class="err" id="m-err"></div><button onclick="unlockMant()">Entrar</button></div>';
-    return;
+  // ÁREA: prioridad 1 = API; solo si falla → código local
+  let area_id,quien;
+  if(iaOk&&areas.some(a=>a.id==r.area_id)){area_id=+r.area_id;quien='API ('+modelo+')'}
+  else{
+    if(iaOk)console.warn('   ⚠ La API no dio un area_id válido ('+r.area_id+') → entra el código local');
+    const g=guessArea(t,r.categoria);
+    if(g){area_id=g.id;quien='código local (guessArea, respaldo)'}
+    else{area_id=(areas[0]||{}).id;quien='⚠ POR DEFECTO (primera área, nadie decidió)'}
   }
-  m.innerHTML=
-   '<div class="mp"><h3>Estado del sistema</h3><div id="m-estado">Cargando…</div><button class="g" onclick="loadEstado()">Actualizar</button></div>'+
-   '<div class="mp"><h3>Enviar notificación de prueba</h3>'+
-    '<select id="m-dest"></select><input id="m-tit" placeholder="Título" value="Prueba de LifeOS">'+
-    '<textarea id="m-msg" rows="2" placeholder="Mensaje">Si ves esto, las notificaciones funcionan.</textarea>'+
-    '<button id="m-send" onclick="enviarPrueba()">Enviar</button><div id="m-res" class="note"></div></div>'+
-   '<div class="mp"><h3>Avisos automáticos</h3><p class="note" style="margin-top:0">Pago por vencer (mañana, con monto) y vencido (ayer). Se ejecutan solos cada día a las 8:00 a. m. (Perú).</p>'+
-    '<button class="g" onclick="avisos(true)">Simular</button><button onclick="if(confirm(\'¿Enviar ahora los avisos reales?\'))avisos(false)">Ejecutar ahora</button><div id="m-avisos"></div></div>'+
-   '<div class="mp"><h3>Usuarios y dispositivos</h3><div id="m-users">Cargando…</div></div>'+
-   '<div class="mp"><h3>Historial de envíos</h3><select id="m-flt" onchange="loadLog()"><option value="">Todos</option><option>enviado</option><option>error</option><option>sin_dispositivo</option><option>pendiente</option></select><div id="m-log">Cargando…</div></div>';
-  loadEstado();loadUsers();loadLog();
+  fuente.area=quien;
+  const an=(areas.find(a=>a.id==area_id)||{}).nombre;
+  console.log('%c4) ÁREA FINAL: '+an+'  ← decidió: '+quien,'font-weight:bold;color:'+(quien.startsWith('API')?'#10b981':'#d97706'));
+  console.log('%c5) RESPUESTA FINAL DE: '+(iaOk?modelo:'código local (la API falló)'),'font-weight:bold;background:#10b981;color:#fff;padding:2px 6px;border-radius:4px');
+  console.table(fuente);
+  console.groupEnd();
+  m.textContent=iaOk?'Revisa los datos y guarda ✓':'Sin IA por ahora: lectura básica. Revisa los datos.';
+  const ok=(v,a,d)=>a.includes(v)?v:d;
+  openForm(null,{titulo:String(r.titulo).slice(0,120),area_id,categoria:ok(r.categoria,CATS,'otro'),fecha:/^\d{4}-\d\d-\d\d$/.test(r.fecha)?r.fecha:iso(now),hora:r.hora||'',importancia:ok(+r.importancia,[1,2,3],2),esfuerzo:ok(+r.esfuerzo,[1,2,3],2),monto:r.monto>0?r.monto:null,repite:ok(r.repite,['no','semanal','mensual','anual'],'no'),notas:r.notas||''})
 }
-async function unlockMant(){
-  const p=$('m-pass').value;if(!p)return;
-  adminPass=p;
-  try{await adm('estado');drawMant()}
-  catch(e){adminPass='';$('m-err').textContent=e.message==='no autorizado'?'No autorizado: contraseña incorrecta o sin permisos de administrador':e.message}
-}
-function mErr(id,e){
-  if(e.message==='no autorizado'){adminPass='';drawMant();return}
-  $(id).innerHTML='<span class="bad">'+esc(e.message)+'</span>';
-}
-async function loadEstado(){
-  try{
-    const r=await adm('estado');
-    $('m-estado').innerHTML=
-     '<div class="row">Claves VAPID: <b class="'+(r.vapid?'ok':'bad')+'">'+(r.vapid?'configuradas':'faltan')+'</b></div>'+
-     '<div class="row">Dispositivos activos: <b>'+r.dispositivos_activos+'</b></div>'+
-     '<div class="row">Último cron: <b>'+esc(r.cron_ultimo?fmt(r.cron_ultimo.split(' · ')[0])+' · '+r.cron_ultimo.split(' · ')[1]:'aún no ha corrido')+'</b></div>'+
-     (r.subjectPorDefecto?'<div class="row warn">⚠ VAPID_SUBJECT usa un correo de ejemplo. Cámbialo por el tuyo.</div>':'');
-  }catch(e){mErr('m-estado',e)}
-}
-let usersCache=[];
-async function loadUsers(){
-  try{
-    const r=await adm('usuarios');usersCache=r.usuarios;
-    $('m-dest').innerHTML=r.usuarios.map(x=>'<option value="'+esc(x.username)+'">'+esc(x.nombre||x.username)+' ('+esc(x.username)+') · '+x.activos+' dispositivo'+(x.activos===1?'':'s')+'</option>').join('');
-    $('m-users').innerHTML=r.usuarios.map(x=>'<div class="row"><b>'+esc(x.nombre||x.username)+'</b> <span class="pill">'+esc(x.username)+'</span>'+(x.admin?'<span class="pill">admin</span>':'')+
-      (x.dispositivos.length?x.dispositivos.map(d=>'<small>'+(d.activo?'🟢':'⚪')+' '+esc(shortUA(d.user_agent))+' · desde '+fmt(d.creado_en)+(d.ultimo_ok?' · último ok '+fmt(d.ultimo_ok):'')+'</small>').join(''):'<small>Sin avisos activados</small>')+'</div>').join('');
-  }catch(e){mErr('m-users',e)}
-}
-function shortUA(ua){ua=ua||'';const b=/Edg\//.test(ua)?'Edge':/Chrome\//.test(ua)?'Chrome':/Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'Navegador';const o=/Android/.test(ua)?'Android':/iPhone|iPad/.test(ua)?'iOS':/Windows/.test(ua)?'Windows':/Mac/.test(ua)?'Mac':/Linux/.test(ua)?'Linux':'';return b+(o?' · '+o:'')}
-async function enviarPrueba(){
-  const btn=$('m-send');btn.disabled=true;$('m-res').textContent='Enviando…';
-  try{
-    const r=await adm('enviar_prueba',{destino:$('m-dest').value,titulo:$('m-tit').value,mensaje:$('m-msg').value});
-    const t={enviado:'<span class="ok">✓ Enviado a '+r.enviados+' de '+r.dispositivos+' dispositivo(s)</span>',sin_dispositivo:'<span class="warn">Ese usuario no tiene dispositivos con avisos activados</span>',error:'<span class="bad">Error al enviar: '+esc(r.detalle)+'</span>'};
-    $('m-res').innerHTML=t[r.estado]||esc(r.estado);
-    loadUsers();loadLog();
-  }catch(e){mErr('m-res',e)}
-  btn.disabled=false;
-}
-const RES={se_enviaria:'se enviaría',ya_enviado:'ya enviado antes',omitido_sin_dispositivo:'omitido (sin dispositivo)',enviado:'enviado',error:'error',sin_dispositivo:'sin dispositivo'};
-async function avisos(sim){
-  $('m-avisos').innerHTML='<p class="note">'+(sim?'Simulando…':'Ejecutando…')+'</p>';
-  try{
-    const r=await adm('ejecutar_avisos',{simular:sim});
-    $('m-avisos').innerHTML='<p class="note"><b>'+(sim?'Simulación':'Ejecución real')+'</b> · mañana: '+r.fecha_manana+' · ayer: '+r.fecha_ayer+' · '+r.total+' coincidencia(s)</p>'+
-      (r.items.length?r.items.map(i=>'<div class="row"><b>'+esc(i.titulo)+'</b> → '+esc(i.username)+'<small>'+esc(i.cuerpo)+' · <i>'+esc(RES[i.resultado]||i.resultado)+'</i></small></div>').join(''):'<p class="note">No hay nada que avisar hoy.</p>');
-    if(!sim){loadLog();loadUsers()}
-  }catch(e){mErr('m-avisos',e)}
-}
-async function loadLog(){
-  try{
-    const f=$('m-flt').value;
-    const r=await adm('log',{estado:f||undefined,limite:50});
-    $('m-log').innerHTML=r.log.length?r.log.map(l=>'<div class="row"><b>'+esc(l.titulo)+'</b> → '+esc(l.username)+' <span class="pill">'+esc(l.tipo)+'</span><span class="pill '+(l.estado==='enviado'?'ok':l.estado==='error'?'bad':'warn')+'">'+esc(l.estado)+'</span><small>'+esc(l.cuerpo)+'</small><small>'+fmt(l.enviado_en)+(l.detalle?' · '+esc(l.detalle):'')+'</small></div>').join(''):'<p class="note">Sin registros.</p>';
-  }catch(e){mErr('m-log',e)}
-}
-drawAuth();showTab();
+function dictar(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition,m=$('#cap-msg');if(!SR){m.textContent='Tu navegador no permite dictado. Escribe la frase.';return}
+  const r=new SR();r.lang='es-PE';r.onresult=e=>{$('#cap').value=e.results[0][0].transcript;capture()};r.onerror=()=>{m.textContent='No pude escuchar. Intenta de nuevo.'};m.textContent='Escuchando…';r.start()}
+
+const toMin=h=>{const[a,b]=String(h).split(':').map(Number);return a*60+b},fmt=m=>pad(Math.floor(m/60))+':'+pad(m%60);
+async function planData(){const u=encodeURIComponent(user.username);
+  const[cs,ts,st]=await Promise.all([api('courses?username=eq.'+u+'&select=id,name'),api('tasks?username=eq.'+u+'&select=id,course_id,name,deadline,deadline_time,categoria'),api('user_task_status?username=eq.'+u+'&select=task_id,hecho,entregado')]);
+  const cn={},sd={},o=[];cs.forEach(c=>cn[c.id]=c.name);st.forEach(x=>sd[x.task_id]=x);
+  items.filter(i=>!i.hecho).forEach(i=>{const a=areas.find(x=>x.id===i.area_id)||{};o.push({ref:'p'+i.id,tipo:'personal',titulo:i.titulo,categoria:i.categoria,fecha:i.fecha,hora:i.hora?String(i.hora).slice(0,5):null,dias_restantes:days(i.fecha),importancia:i.importancia,esfuerzo:i.esfuerzo,monto:i.monto,area:a.nombre})});
+  ts.forEach(t=>{const s=sd[t.id]||{};if((s.hecho&&s.entregado)||days(t.deadline)<0)return;const ex=t.categoria==='examen';o.push({ref:'t'+t.id,tipo:'estudio',titulo:t.name,categoria:t.categoria,fecha:t.deadline,hora:t.deadline_time||null,dias_restantes:days(t.deadline),importancia:ex?3:2,esfuerzo:ex?3:2,area:cn[t.course_id]||'Curso'})});
+  return o}
+function motivo(i){const d=i.dias_restantes;return(d<0?'Vencido hace '+(-d)+' d':d==0?'Vence hoy':d==1?'Vence mañana':'Vence en '+d+' días')+' · importancia '+['','baja','media','alta'][i.importancia]}
+function planLocal(l,desde,hasta){const dur=i=>i.tipo==='estudio'?(i.categoria==='examen'?90:60):[0,15,30,60][i.esfuerzo],sc=i=>{const d=i.dias_restantes;return(d<=0?10:d<=2?8:d<=7?5:d<=30?3:1)*2+i.importancia*2+i.esfuerzo};
+  let t=toMin(desde);const e=toMin(hasta),bl=[],no=[];for(const i of[...l].sort((a,b)=>sc(b)-sc(a))){const m=dur(i);if(t+m<=e){bl.push({ref:i.ref,inicio:fmt(t),fin:fmt(t+m),motivo:motivo(i)});t+=m+5}else no.push(i.ref)}
+  return{bloques:bl,sin_tiempo:no,consejo:''}}
+function planValido(p,l,desde,hasta){if(!p||!Array.isArray(p.bloques)||!p.bloques.length)return false;const refs=new Set(l.map(i=>i.ref)),re=/^\d{2}:\d{2}$/;let prev=toMin(desde);
+  for(const b of[...p.bloques].sort((x,y)=>String(x.inicio).localeCompare(String(y.inicio)))){if(!refs.has(b.ref)||!re.test(b.inicio)||!re.test(b.fin))return false;const a=toMin(b.inicio),z=toMin(b.fin);if(a<prev||z<=a||z>toMin(hasta))return false;prev=z}return true}
+function planOpen(){const n=new Date(),m=Math.ceil((n.getHours()*60+n.getMinutes())/30)*30,d=m>=22*60?'08:00':fmt(m);
+  $('#dlg').innerHTML=`<div class="top"><b>📅 Plan de hoy</b><button class="x" onclick="$('#dlg').close()">✕</button></div><div class="two"><div><label>Libre desde</label><input id="pl-d" type="time" value="${d}"></div><div><label>Hasta</label><input id="pl-h" type="time" value="${m>=22*60?'13:00':'22:00'}"></div></div><button class="btn p" style="width:100%;margin-top:10px" onclick="planGo()">Generar plan</button><div id="pl-out" style="margin-top:12px"></div>`;$('#dlg').showModal()}
+async function planGo(){const desde=$('#pl-d').value,hasta=$('#pl-h').value,out=$('#pl-out');if(!desde||!hasta||toMin(desde)>=toMin(hasta)){out.innerHTML='<div class="empty">Elige un rango válido.</div>';return}
+  out.innerHTML='<div class="empty">Armando tu plan…</div>';let l;try{l=await planData()}catch(e){out.innerHTML='<div class="empty">No se pudieron leer tus pendientes.</div>';return}
+  if(!l.length){out.innerHTML='<div class="empty">No tienes pendientes. ¡Día libre!</div>';return}
+  let p=null,via='IA';try{p=(await ia({modo:'plan',hoy:iso(new Date()),desde,hasta,items:sort(l.map(i=>({...i,fecha:i.fecha,hecho:false}))).slice(0,30)})).resultado}catch(e){}
+  if(!planValido(p,l,desde,hasta)){p=planLocal(l,desde,hasta);via='modo básico (sin IA)'}
+  const by={};l.forEach(i=>by[i.ref]=i);
+  out.innerHTML=p.bloques.sort((a,b)=>a.inicio.localeCompare(b.inicio)).map(b=>{const i=by[b.ref];return`<div class="card row"><div class="chip c2" style="min-width:96px"><span class="h" style="font-size:15px">${b.inicio}</span><span class="f">a ${b.fin}</span></div><div class="t"><b>${i.tipo==='estudio'?'📚':'🏡'} ${esc(i.titulo)}</b><small>${esc(b.motivo||motivo(i))}</small></div></div>`}).join('')
+   +((p.sin_tiempo||[]).filter(r=>by[r]).length?`<h3>No cabe hoy</h3>`+p.sin_tiempo.filter(r=>by[r]).map(r=>`<div class="card row"><div class="t"><b>${esc(by[r].titulo)}</b><small>${motivo(by[r])}</small></div></div>`).join(''):'')
+   +(p.consejo?`<div class="card" style="margin-top:8px">💡 ${esc(p.consejo)}</div>`:'')+`<div style="font-size:11px;color:var(--mut);margin-top:6px">Generado con ${via}</div>`}
+(async()=>{if(!user||!user.username){render();return}$('#app').innerHTML='<div class="empty">Cargando…</div>';try{await load();render()}catch(e){$('#app').innerHTML='<div class="card empty">No se pudo conectar con la base de datos.</div>'}})();
 </script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});</script>
 </body>
 </html>
