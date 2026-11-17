@@ -93,49 +93,18 @@ function render(){
   const pend=items.filter(i=>!i.hecho);
   if(view){const a=areas.find(x=>x.id===view);const l=sort(pend.filter(i=>i.area_id===view));
     $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Personal</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><h1>${a.icono} ${esc(a.nombre)}</h1><h3>Pendientes (${l.length})</h3>${l.map(row).join('')||'<div class="card empty">Nada pendiente aquí.</div>'}`;return}
-  const top=sort(pend).slice(0,3);
-  const now=new Date();const ym=iso(now).slice(0,7);
-  const btn=`<button class="btn p" onclick="priorizarIA()">🤖 Priorizar</button>`;
+  const top=sort(pend).slice(0,3);const now=new Date();const ym=iso(now).slice(0,7);
   const porPagar=pend.filter(i=>i.monto&&i.fecha.startsWith(ym)).reduce((s,i)=>s+Number(i.monto),0);
   const hechasMes=items.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)).length;
-  $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><button class="btn p" onclick="openForm()">+ Nueva</button></div><h1 style="margin-bottom:6px">Personal</h1>
-  <div class="top" style="margin:18px 0 8px"><h3 style="margin:0">Qué hacer primero</h3>${pend.length?btn:''}</div>${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}
+  $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><span><button class="btn" onclick="planOpen()">📅 Plan de hoy</button> <button class="btn p" onclick="openForm()">+ Nueva</button></span></div><h1 style="margin-bottom:6px">Personal</h1><div class="card" style="display:flex;gap:6px;margin-bottom:4px"><input id="cap" placeholder="Escribe o dicta: pagar luz el viernes 80 soles" onkeydown="if(event.key==='Enter')capture()"><button class="btn" onclick="dictar()" title="Dictar">🎤</button><button class="btn p" onclick="capture()" title="Entender con IA">✨</button></div><div id="cap-msg" style="font-size:12px;color:var(--mut);min-height:16px;margin-bottom:4px"></div>
+  <h3>Qué hacer primero</h3>${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}
   <h3>Tus áreas</h3><div class="grid">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><b>${esc(a.nombre)}</b><br><small style="color:var(--mut)">${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div>`).join('')}</div>
   <h3>Resumen del mes</h3><div class="stats"><div class="card"><b>S/ ${porPagar.toFixed(2)}</b><small style="color:var(--mut)">por pagar este mes</small></div><div class="card"><b>${hechasMes}</b><small style="color:var(--mut)">actividades cumplidas</small></div></div>`}
-async function priorizarIA(){
-  const pend=items.filter(i=>!i.hecho);if(!pend.length)return;
-  const d=$('#dlg');
-  const head=`<div class="top"><b>🤖 Prioridades sugeridas</b><button class="x" onclick="$('#dlg').close()">✕</button></div>`;
-  const show=h=>{d.innerHTML=head+h};
-  show('<div class="empty">Pensando… <span id="ai-s">0</span> s</div>');
-  if(!d.open)d.showModal();
-  let seg=0;const tk=setInterval(()=>{seg++;const e=$('#ai-s');if(e)e.textContent=seg},1000);
-  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),45000);
-  const t0=Date.now();
-  console.log('[priorizar] enviando '+pend.length+' pendientes a la IA…');
-  try{
-    const payload=pend.slice(0,60).map(i=>{const a=areas.find(x=>x.id===i.area_id)||{};return{id:i.id,titulo:i.titulo,categoria:i.categoria,area:a.nombre||'',fecha:i.fecha,hora:i.hora?String(i.hora).slice(0,5):null,importancia:i.importancia,esfuerzo:i.esfuerzo,monto:i.monto,repite:i.repite,notas:i.notas||''}});
-    const r=await fetch(URL_+'/functions/v1/priorizar-personal',{method:'POST',signal:ctl.signal,headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify({hoy:iso(new Date()),items:payload})});
-    const txt=await r.text();let j;
-    try{j=JSON.parse(txt)}catch(_){throw new Error('Respuesta no válida del servidor (HTTP '+r.status+'): '+txt.slice(0,200))}
-    if(j.intentos&&j.intentos.length)console.warn('[priorizar] intentos fallidos:',j.intentos);
-    if(!r.ok)throw new Error((j.error||('HTTP '+r.status))+(j.intentos&&j.intentos.length?' — '+j.intentos.join(' | '):''));
-    console.log('[priorizar] USADO: '+j.proveedor+' · modelo '+j.modelo+' · key #'+j.key+' · '+((Date.now()-t0)/1000).toFixed(1)+' s');
-    const nombre=j.proveedor==='gemini'?'Gemini':'Groq';
-    const lista=j.orden.slice(0,10).map((o,n)=>{const i=items.find(x=>x.id===o.id);if(!i)return'';const a=areas.find(x=>x.id===i.area_id)||{};
-      return `<div class="card row" style="margin-bottom:8px"><b style="flex:none;width:22px;color:var(--ac)">${n+1}</b><div class="t"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')} · ${esc(why(i))}</small>${o.razon?`<small style="display:block;margin-top:3px">💡 ${esc(o.razon)}</small>`:''}</div></div>`}).join('');
-    show((j.resumen?`<p style="margin:4px 0 12px">${esc(j.resumen)}</p>`:'')+lista+`<small style="color:var(--mut);display:block;margin-top:6px">Sugerido por ${nombre} (${esc(j.modelo)}). Tu lista no cambió.</small>`);
-  }catch(e){
-    const msg=e&&e.name==='AbortError'?'No hubo respuesta en 45 segundos y se canceló.':String((e&&e.message)||e);
-    console.error('[priorizar] ERROR tras '+((Date.now()-t0)/1000).toFixed(1)+' s:',msg,e);
-    show(`<div class="card empty" style="color:var(--red)">No se pudo priorizar con IA.<br><small>${esc(msg.slice(0,300))}</small><br><small style="color:var(--mut)">Detalle en la consola del navegador.</small></div><button class="btn p" style="width:100%;margin-top:10px" onclick="priorizarIA()">Reintentar</button>`);
-  }finally{clearInterval(tk);clearTimeout(to)}
-}
 let editId=null;
 function edit(id){const it=items.find(x=>x.id===id);if(it)openForm(null,it)}
-function openForm(aid,it){editId=it?it.id:null;const v=it||{};const d=$('#dlg');
+function openForm(aid,it){editId=it&&it.id?it.id:null;const v=it||{};const d=$('#dlg');
   const sel=(a,b)=>String(a)===String(b)?'selected':'';
-  d.innerHTML=`<div class="top"><b>${it?'Editar actividad':'Nueva actividad'}</b><button class="x" onclick="$('#dlg').close()">✕</button></div>
+  d.innerHTML=`<div class="top"><b>${editId?'Editar actividad':'Nueva actividad'}</b><button class="x" onclick="$('#dlg').close()">✕</button></div>
   <label>Título</label><input id="f-t" placeholder="Pagar recibo de agua" value="${esc(v.titulo||'')}">
   <div class="two"><div><label>Área</label><select id="f-a">${areas.map(a=>`<option value="${a.id}" ${sel(a.id,it?it.area_id:aid)}>${a.icono} ${esc(a.nombre)}</option>`).join('')}</select></div><div><label>Categoría</label><select id="f-c">${CATS.map(c=>`<option ${sel(c,v.categoria)}>${c}</option>`).join('')}</select></div></div>
   <div class="two"><div><label>Fecha límite</label><input id="f-f" type="date" value="${v.fecha||iso(new Date())}"></div><div><label>Hora (opcional)</label><input id="f-h" type="time" value="${v.hora?String(v.hora).slice(0,5):''}"></div></div>
@@ -143,7 +112,7 @@ function openForm(aid,it){editId=it?it.id:null;const v=it||{};const d=$('#dlg');
   <div class="two"><div><label>Monto (S/)</label><input id="f-m" type="number" step="0.01" min="0" value="${v.monto??''}"></div><div><label>Se repite</label><select id="f-r">${['no','semanal','mensual','anual'].map(r=>`<option value="${r}" ${sel(r,v.repite||'no')}>${r==='no'?'No':r[0].toUpperCase()+r.slice(1)}</option>`).join('')}</select></div></div>
   <label>Notas</label><textarea id="f-n" rows="2">${esc(v.notas||'')}</textarea>
   <p id="f-err" style="color:var(--red);font-size:13px;margin:8px 0 0"></p>
-  <button class="btn p" style="width:100%;margin-top:10px" onclick="save()">${it?'Guardar cambios':'Guardar actividad'}</button>`;d.showModal()}
+  <button class="btn p" style="width:100%;margin-top:10px" onclick="save()">${editId?'Guardar cambios':'Guardar actividad'}</button>`;d.showModal()}
 async function save(){const t=$('#f-t').value.trim(),f=$('#f-f').value;if(!t||!f){$('#f-err').textContent='Escribe un título y una fecha.';return}
   const m=$('#f-m').value;
   const body={area_id:+$('#f-a').value,titulo:t,categoria:$('#f-c').value,fecha:f,hora:$('#f-h').value||null,importancia:+$('#f-i').value,esfuerzo:+$('#f-e').value,monto:m?+m:null,repite:$('#f-r').value,notas:$('#f-n').value};
@@ -156,6 +125,50 @@ async function done(id){const i=items.find(x=>x.id===id);if(!i)return;
     if(i.repite!=='no'){const r=await api('personal_items',{method:'POST',body:JSON.stringify({username:i.username,area_id:i.area_id,titulo:i.titulo,categoria:i.categoria,fecha:next(i.fecha,i.repite),hora:i.hora,importancia:i.importancia,esfuerzo:i.esfuerzo,monto:i.monto,repite:i.repite,notas:i.notas})});items.push(...r)}
     render()}catch(e){alert('No se pudo actualizar.')}}
 async function del(id){if(!confirm('¿Eliminar esta actividad?'))return;try{await api('personal_items?id=eq.'+id,{method:'DELETE'});items=items.filter(x=>x.id!==id);render()}catch(e){alert('No se pudo eliminar.')}}
+
+/* ===== IA: captura en lenguaje natural + plan de hoy ===== */
+const WD=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+async function ia(b){const r=await fetch(URL_+'/functions/v1/lifeos-ia',{method:'POST',headers:H,body:JSON.stringify(b)});const j=await r.json();if(j.error)throw new Error(j.error);return j}
+function localParse(t){const now=new Date(),l=t.toLowerCase(),add=n=>iso(new Date(now.getFullYear(),now.getMonth(),now.getDate()+n));let f=iso(now);
+  if(/pasado mañana/.test(l))f=add(2);else if(/mañana/.test(l))f=add(1);
+  else{const k=WD.findIndex(w=>l.includes(w)||l.includes(w.normalize('NFD').replace(/[\u0300-\u036f]/g,'')));if(k>=0)f=add((k-now.getDay()+7)%7||7)}
+  const m=l.match(/s\/\.?\s*(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)\s*soles?/),monto=m?parseFloat((m[1]||m[2]).replace(',','.')):null;
+  const h=l.match(/(\d{1,2})(?::(\d\d))?\s*(am|pm)\b/),hora=h?pad((+h[1]%12)+(h[3]==='pm'?12:0))+':'+(h[2]||'00'):'';
+  const cat=/pag|recibo|luz|agua|alquiler/.test(l)?'pago':/cita|doctor|dentista|médico/.test(l)?'cita':/trámite|dni|renov/.test(l)?'trámite':'otro';
+  const titulo=t.replace(/\s*(el |para )?(lunes|martes|miércoles|jueves|viernes|sábado|domingo|pasado mañana|mañana|hoy)/gi,'').replace(/s\/\.?\s*\d+([.,]\d+)?|\d+([.,]\d+)?\s*soles?/gi,'').replace(/\s+/g,' ').trim();
+  return{titulo:titulo||t,fecha:f,hora,monto,categoria:cat,importancia:monto||cat==='pago'?3:2,esfuerzo:2,repite:'no'}}
+async function capture(){const t=$('#cap').value.trim();if(!t)return;const m=$('#cap-msg'),now=new Date();m.textContent='Entendiendo…';let r=null;
+  try{r=(await ia({modo:'captura',texto:t,hoy:iso(now),dia:WD[now.getDay()],areas:areas.map(a=>({id:a.id,nombre:a.nombre}))})).resultado}catch(e){}
+  if(!r||!r.titulo){r=localParse(t);m.textContent='Sin IA por ahora: lectura básica. Revisa los datos.'}else m.textContent='Revisa los datos y guarda ✓';
+  const ok=(v,a,d)=>a.includes(v)?v:d;
+  openForm(null,{titulo:String(r.titulo).slice(0,120),area_id:areas.some(a=>a.id==r.area_id)?+r.area_id:(areas[0]||{}).id,categoria:ok(r.categoria,CATS,'otro'),fecha:/^\d{4}-\d\d-\d\d$/.test(r.fecha)?r.fecha:iso(now),hora:r.hora||'',importancia:ok(+r.importancia,[1,2,3],2),esfuerzo:ok(+r.esfuerzo,[1,2,3],2),monto:r.monto>0?r.monto:null,repite:ok(r.repite,['no','semanal','mensual','anual'],'no'),notas:r.notas||''})}
+function dictar(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition,m=$('#cap-msg');if(!SR){m.textContent='Tu navegador no permite dictado. Escribe la frase.';return}
+  const r=new SR();r.lang='es-PE';r.onresult=e=>{$('#cap').value=e.results[0][0].transcript;capture()};r.onerror=()=>{m.textContent='No pude escuchar. Intenta de nuevo.'};m.textContent='Escuchando…';r.start()}
+
+const toMin=h=>{const[a,b]=String(h).split(':').map(Number);return a*60+b},fmt=m=>pad(Math.floor(m/60))+':'+pad(m%60);
+async function planData(){const u=encodeURIComponent(user.username);
+  const[cs,ts,st]=await Promise.all([api('courses?username=eq.'+u+'&select=id,name'),api('tasks?username=eq.'+u+'&select=id,course_id,name,deadline,deadline_time,categoria'),api('user_task_status?username=eq.'+u+'&select=task_id,hecho,entregado')]);
+  const cn={},sd={},o=[];cs.forEach(c=>cn[c.id]=c.name);st.forEach(x=>sd[x.task_id]=x);
+  items.filter(i=>!i.hecho).forEach(i=>{const a=areas.find(x=>x.id===i.area_id)||{};o.push({ref:'p'+i.id,tipo:'personal',titulo:i.titulo,categoria:i.categoria,fecha:i.fecha,hora:i.hora?String(i.hora).slice(0,5):null,dias_restantes:days(i.fecha),importancia:i.importancia,esfuerzo:i.esfuerzo,monto:i.monto,area:a.nombre})});
+  ts.forEach(t=>{const s=sd[t.id]||{};if((s.hecho&&s.entregado)||days(t.deadline)<0)return;const ex=t.categoria==='examen';o.push({ref:'t'+t.id,tipo:'estudio',titulo:t.name,categoria:t.categoria,fecha:t.deadline,hora:t.deadline_time||null,dias_restantes:days(t.deadline),importancia:ex?3:2,esfuerzo:ex?3:2,area:cn[t.course_id]||'Curso'})});
+  return o}
+function motivo(i){const d=i.dias_restantes;return(d<0?'Vencido hace '+(-d)+' d':d==0?'Vence hoy':d==1?'Vence mañana':'Vence en '+d+' días')+' · importancia '+['','baja','media','alta'][i.importancia]}
+function planLocal(l,desde,hasta){const dur=i=>i.tipo==='estudio'?(i.categoria==='examen'?90:60):[0,15,30,60][i.esfuerzo],sc=i=>{const d=i.dias_restantes;return(d<=0?10:d<=2?8:d<=7?5:d<=30?3:1)*2+i.importancia*2+i.esfuerzo};
+  let t=toMin(desde);const e=toMin(hasta),bl=[],no=[];for(const i of[...l].sort((a,b)=>sc(b)-sc(a))){const m=dur(i);if(t+m<=e){bl.push({ref:i.ref,inicio:fmt(t),fin:fmt(t+m),motivo:motivo(i)});t+=m+5}else no.push(i.ref)}
+  return{bloques:bl,sin_tiempo:no,consejo:''}}
+function planValido(p,l,desde,hasta){if(!p||!Array.isArray(p.bloques)||!p.bloques.length)return false;const refs=new Set(l.map(i=>i.ref)),re=/^\d{2}:\d{2}$/;let prev=toMin(desde);
+  for(const b of[...p.bloques].sort((x,y)=>String(x.inicio).localeCompare(String(y.inicio)))){if(!refs.has(b.ref)||!re.test(b.inicio)||!re.test(b.fin))return false;const a=toMin(b.inicio),z=toMin(b.fin);if(a<prev||z<=a||z>toMin(hasta))return false;prev=z}return true}
+function planOpen(){const n=new Date(),m=Math.ceil((n.getHours()*60+n.getMinutes())/30)*30,d=m>=22*60?'08:00':fmt(m);
+  $('#dlg').innerHTML=`<div class="top"><b>📅 Plan de hoy</b><button class="x" onclick="$('#dlg').close()">✕</button></div><div class="two"><div><label>Libre desde</label><input id="pl-d" type="time" value="${d}"></div><div><label>Hasta</label><input id="pl-h" type="time" value="${m>=22*60?'13:00':'22:00'}"></div></div><button class="btn p" style="width:100%;margin-top:10px" onclick="planGo()">Generar plan</button><div id="pl-out" style="margin-top:12px"></div>`;$('#dlg').showModal()}
+async function planGo(){const desde=$('#pl-d').value,hasta=$('#pl-h').value,out=$('#pl-out');if(!desde||!hasta||toMin(desde)>=toMin(hasta)){out.innerHTML='<div class="empty">Elige un rango válido.</div>';return}
+  out.innerHTML='<div class="empty">Armando tu plan…</div>';let l;try{l=await planData()}catch(e){out.innerHTML='<div class="empty">No se pudieron leer tus pendientes.</div>';return}
+  if(!l.length){out.innerHTML='<div class="empty">No tienes pendientes. ¡Día libre!</div>';return}
+  let p=null,via='IA';try{p=(await ia({modo:'plan',hoy:iso(new Date()),desde,hasta,items:sort(l.map(i=>({...i,fecha:i.fecha,hecho:false}))).slice(0,30)})).resultado}catch(e){}
+  if(!planValido(p,l,desde,hasta)){p=planLocal(l,desde,hasta);via='modo básico (sin IA)'}
+  const by={};l.forEach(i=>by[i.ref]=i);
+  out.innerHTML=p.bloques.sort((a,b)=>a.inicio.localeCompare(b.inicio)).map(b=>{const i=by[b.ref];return`<div class="card row"><div class="chip c2" style="min-width:96px"><span class="h" style="font-size:15px">${b.inicio}</span><span class="f">a ${b.fin}</span></div><div class="t"><b>${i.tipo==='estudio'?'📚':'🏡'} ${esc(i.titulo)}</b><small>${esc(b.motivo||motivo(i))}</small></div></div>`}).join('')
+   +((p.sin_tiempo||[]).filter(r=>by[r]).length?`<h3>No cabe hoy</h3>`+p.sin_tiempo.filter(r=>by[r]).map(r=>`<div class="card row"><div class="t"><b>${esc(by[r].titulo)}</b><small>${motivo(by[r])}</small></div></div>`).join(''):'')
+   +(p.consejo?`<div class="card" style="margin-top:8px">💡 ${esc(p.consejo)}</div>`:'')+`<div style="font-size:11px;color:var(--mut);margin-top:6px">Generado con ${via}</div>`}
 (async()=>{if(!user||!user.username){render();return}$('#app').innerHTML='<div class="empty">Cargando…</div>';try{await load();render()}catch(e){$('#app').innerHTML='<div class="card empty">No se pudo conectar con la base de datos.</div>'}})();
 </script>
 </body>
