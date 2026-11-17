@@ -129,8 +129,11 @@ async function del(id){if(!confirm('¿Eliminar esta actividad?'))return;try{awai
 /* ===== IA: captura en lenguaje natural + plan de hoy ===== */
 const WD=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 async function ia(b){const r=await fetch(URL_+'/functions/v1/lifeos-ia',{method:'POST',headers:H,body:JSON.stringify(b)});const j=await r.json();if(j.error)throw new Error(j.error);return j}
-function dmf(l){const now=new Date(),b=l.match(/\bd[ií]a\s+(\d{1,2})\b(?!\s*de\s)/)||l.match(/\bel\s+(\d{1,2})\b(?!\s*(?:de\s|\/|:|am|pm|h\b|soles?))/);if(!b)return null;const d=+b[1];if(d<1||d>31)return null;
-  let y=now.getFullYear(),m=now.getMonth();if(d<now.getDate()){m++;if(m>11){m=0;y++}}
+function dmf(l){const now=new Date();let off=0,b=l.match(/\b(?:el\s+)?(?:d[ií]a\s+)?(\d{1,2})\s+(?:de\s+|del\s+)?(este\s+mes|mes\s+actual|(?:el\s+)?(?:pr[oó]ximo|siguiente)\s+mes|mes\s+que\s+viene)/);
+  if(b){off=/pr[oó]ximo|siguiente|viene/.test(b[2])?1:0}
+  else{b=l.match(/\bd[ií]a\s+(\d{1,2})\b(?!\s*de\s)/)||l.match(/\bel\s+(\d{1,2})\b(?!\s*(?:de\s|\/|:|am|pm|h\b|soles?))/);if(b&&+b[1]<now.getDate())off=1}
+  if(!b)return null;const d=+b[1];if(d<1||d>31)return null;
+  const base=new Date(now.getFullYear(),now.getMonth()+off,1),y=base.getFullYear(),m=base.getMonth();
   return iso(new Date(y,m,Math.min(d,new Date(y,m+1,0).getDate())))}
 function localParse(t){const now=new Date(),l=t.toLowerCase(),add=n=>iso(new Date(now.getFullYear(),now.getMonth(),now.getDate()+n));let f=iso(now);
   if(/pasado mañana/.test(l))f=add(2);else if(/mañana/.test(l))f=add(1);
@@ -139,7 +142,7 @@ function localParse(t){const now=new Date(),l=t.toLowerCase(),add=n=>iso(new Dat
   const m=l.match(/s\/\.?\s*(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)\s*soles?|(?:cuesta|cuestan|costo|costó|son|total)\s*(?:de\s*)?(\d+(?:[.,]\d+)?)/),monto=m?parseFloat((m[1]||m[2]||m[3]).replace(',','.')):null;
   const h=l.match(/(\d{1,2})(?::(\d\d))?\s*(am|pm)\b/),hora=h?pad((+h[1]%12)+(h[3]==='pm'?12:0))+':'+(h[2]||'00'):'';
   const cat=/pag|recibo|luz|agua|alquiler/.test(l)?'pago':/cita|doctor|dentista|médico/.test(l)?'cita':/trámite|dni|renov/.test(l)?'trámite':'otro';
-  const titulo=t.replace(/\s*(el )?d[ií]a\s+\d{1,2}\b/gi,'').replace(/\s*(cuesta|cuestan|costo|costó)\s*(de\s*)?(s\/\.?\s*)?\d+([.,]\d+)?(\s*soles?)?/gi,'').replace(/\s*(el |para )?(lunes|martes|miércoles|jueves|viernes|sábado|domingo|pasado mañana|mañana|hoy)/gi,'').replace(/s\/\.?\s*\d+([.,]\d+)?|\d+([.,]\d+)?\s*soles?/gi,'').replace(/\s+/g,' ').trim();
+  const titulo=t.replace(/\s*(el\s+)?(d[ií]a\s+)?\d{1,2}\s+(de\s+|del\s+)?(este\s+mes|mes\s+actual|(el\s+)?(pr[oó]ximo|siguiente)\s+mes|mes\s+que\s+viene)/gi,'').replace(/\s*(el )?d[ií]a\s+\d{1,2}\b/gi,'').replace(/\s*(cuesta|cuestan|costo|costó)\s*(de\s*)?(s\/\.?\s*)?\d+([.,]\d+)?(\s*soles?)?/gi,'').replace(/\s*(el |para )?(lunes|martes|miércoles|jueves|viernes|sábado|domingo|pasado mañana|mañana|hoy)/gi,'').replace(/s\/\.?\s*\d+([.,]\d+)?|\d+([.,]\d+)?\s*soles?/gi,'').replace(/\s+/g,' ').trim();
   return{dm:!!dmf(l),titulo:titulo||t,fecha:f,hora,monto,categoria:cat,importancia:monto||cat==='pago'?3:2,esfuerzo:2,repite:'no'}}
 function guessArea(t,c){const l=(t+' '+(c||'')).toLowerCase(),by=re=>areas.find(a=>re.test(a.nombre.toLowerCase()));
   return(/pag|recibo|luz|agua|internet|alquiler|tarjeta|deuda|cuota|dinero/.test(l)&&by(/finanz/))||(/cita|doctor|dentista|médic|medic|pastilla|vacuna|salud/.test(l)&&by(/salud/))||(/trámite|tramite|dni|renov|document|sunat|municip/.test(l)&&by(/tr[aá]mite/))||(/casa|hogar|limpi|arregl|gas|mantenim/.test(l)&&by(/hogar/))||(/cumple|familia|amig|regalo|reuni/.test(l)&&by(/familia/))||null}
