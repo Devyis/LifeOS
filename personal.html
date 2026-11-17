@@ -128,7 +128,7 @@ async function del(id){if(!confirm('¿Eliminar esta actividad?'))return;try{awai
 
 /* ===== IA: captura en lenguaje natural + plan de hoy ===== */
 const WD=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-async function ia(b){const r=await fetch(URL_+'/functions/v1/lifeos-ia',{method:'POST',headers:H,body:JSON.stringify(b)});const j=await r.json();if(j.error)throw new Error(j.error);return j}
+async function ia(b){const r=await fetch(URL_+'/functions/v1/lifeos-ia',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(b)});const j=await r.json();if(j.error)throw new Error(j.error);return j}
 function dmf(l){const now=new Date();let off=0,b=l.match(/\b(?:el\s+)?(?:d[ií]a\s+)?(\d{1,2})\s+(?:de\s+|del\s+)?(este\s+mes|mes\s+actual|(?:el\s+)?(?:pr[oó]ximo|siguiente)\s+mes|mes\s+que\s+viene)/);
   if(b){off=/pr[oó]ximo|siguiente|viene/.test(b[2])?1:0}
   else{b=l.match(/\bd[ií]a\s+(\d{1,2})\b(?!\s*de\s)/)||l.match(/\bel\s+(\d{1,2})\b(?!\s*(?:de\s|\/|:|am|pm|h\b|soles?))/);if(b&&+b[1]<now.getDate())off=1}
