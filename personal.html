@@ -145,13 +145,57 @@ function localParse(t){const now=new Date(),l=t.toLowerCase(),add=n=>iso(new Dat
   const titulo=t.replace(/\s*(el\s+)?(d[ií]a\s+)?\d{1,2}\s+(de\s+|del\s+)?(este\s+mes|mes\s+actual|(el\s+)?(pr[oó]ximo|siguiente)\s+mes|mes\s+que\s+viene)/gi,'').replace(/\s*(el )?d[ií]a\s+\d{1,2}\b/gi,'').replace(/\s*(cuesta|cuestan|costo|costó)\s*(de\s*)?(s\/\.?\s*)?\d+([.,]\d+)?(\s*soles?)?/gi,'').replace(/\s*(el |para )?(lunes|martes|miércoles|jueves|viernes|sábado|domingo|pasado mañana|mañana|hoy)/gi,'').replace(/s\/\.?\s*\d+([.,]\d+)?|\d+([.,]\d+)?\s*soles?/gi,'').replace(/\s+/g,' ').trim();
   return{dm:!!dmf(l),titulo:titulo||t,fecha:f,hora,monto,categoria:cat,importancia:monto||cat==='pago'?3:2,esfuerzo:2,repite:'no'}}
 function guessArea(t,c){const l=(t+' '+(c||'')).toLowerCase(),by=re=>areas.find(a=>re.test(a.nombre.toLowerCase()));
-  return(/pag|recibo|luz|agua|internet|alquiler|tarjeta|deuda|cuota|dinero/.test(l)&&by(/finanz/))||(/cita|doctor|dentista|médic|medic|pastilla|vacuna|salud/.test(l)&&by(/salud/))||(/trámite|tramite|dni|renov|document|sunat|municip/.test(l)&&by(/tr[aá]mite/))||(/casa|hogar|limpi|arregl|gas|mantenim/.test(l)&&by(/hogar/))||(/cumple|familia|amig|regalo|reuni/.test(l)&&by(/familia/))||null}
-async function capture(){const t=$('#cap').value.trim();if(!t)return;const m=$('#cap-msg'),now=new Date();m.textContent='Entendiendo…';let r=null;
-  try{r=(await ia({modo:'captura',texto:t,hoy:iso(now),dia:WD[now.getDay()],areas:areas.map(a=>({id:a.id,nombre:a.nombre}))})).resultado}catch(e){}
-  if(r&&r.titulo){const lp=localParse(t);if(!(+r.monto>0)&&lp.monto)r.monto=lp.monto;if(lp.dm&&(!/^\d{4}-\d\d-\d\d$/.test(r.fecha||'')||r.fecha===iso(now)))r.fecha=lp.fecha}
-  if(!r||!r.titulo){r=localParse(t);m.textContent='Sin IA por ahora: lectura básica. Revisa los datos.'}else m.textContent='Revisa los datos y guarda ✓';
+  return(/pag|recibo|luz|agua|internet|alquiler|tarjeta|deuda|cuota|dinero/.test(l)&&by(/finanz/))||(/cita|doctor|dentista|médic|medic|pastilla|vacuna|salud/.test(l)&&by(/salud/))||(/trámite|tramite|dni|renov|document|sunat|municip/.test(l)&&by(/tr[aá]mite/))||(/casa|hogar|limpi|arregl|gas|mantenim/.test(l)&&by(/hogar/))||(/cumple|familia|amig|regalo|reuni|fiesta|salir|salida|paseo|cine|concierto|social|visita|viaje|discoteca|karaoke|boda/.test(l)&&by(/familia/))||null}
+async function capture(){
+  const t=$('#cap').value.trim();if(!t)return;
+  const m=$('#cap-msg'),now=new Date();m.textContent='Entendiendo…';
+  const fuente={},CAMPOS=['titulo','categoria','fecha','hora','importancia','esfuerzo','monto','repite'];
+  console.group('%c[LifeOS] Captura: "'+t+'"','font-weight:bold;color:#10b981');
+  const payload={modo:'captura',texto:t,hoy:iso(now),dia:WD[now.getDay()],areas:areas.map(a=>({id:a.id,nombre:a.nombre}))};
+  console.log('1) Enviado a la API:',payload);
+  let resp=null,r=null,iaOk=false;
+  try{
+    resp=await ia(payload);
+    console.log('2) Respuesta CRUDA de la API:',resp);
+    r=resp.resultado;iaOk=!!(r&&r.titulo);
+  }catch(e){console.warn('2) La API falló:',e.message)}
+  const modelo=resp&&resp.modelo?(resp.proveedor?resp.proveedor+' / ':'')+resp.modelo:null;
+  if(resp&&resp.intentos)console.table(resp.intentos);
+  if(iaOk){
+    console.log('%c   🤖 Modelo que respondió: '+modelo,'font-weight:bold;color:#10b981');
+    console.log('   💭 Razonamiento de la IA:',r.razonamiento||'(la IA no dio razonamiento)');
+    if(resp.correcciones&&Object.keys(resp.correcciones).length)console.log('   🔧 Correcciones del servidor (solo huecos):',resp.correcciones);
+  }
+  const lp=localParse(t);
+  if(iaOk){
+    CAMPOS.forEach(k=>fuente[k]='API ('+modelo+')');
+    if(resp.correcciones){['monto','fecha'].forEach(k=>{if(resp.correcciones[k])fuente[k]='servidor (regex) sobre API'})}
+    // Respaldo en el navegador: SOLO si la API dejó el campo vacío/inválido
+    if(!(+r.monto>0)&&lp.monto){r.monto=lp.monto;fuente.monto='código local (respaldo)';console.log('   🔧 monto vacío en la API → completado por código local:',lp.monto)}
+    if(lp.dm&&(!/^\d{4}-\d\d-\d\d$/.test(r.fecha||'')||r.fecha===iso(now))){r.fecha=lp.fecha;fuente.fecha='código local (respaldo)';console.log('   🔧 fecha vacía/hoy en la API → código local:',lp.fecha)}
+  }else{
+    console.warn('3) La API no dio respuesta usable → TODO lo decide el código local (respaldo)');
+    r=lp;CAMPOS.forEach(k=>fuente[k]='código local (respaldo)');
+  }
+  // ÁREA: prioridad 1 = API; solo si falla → código local
+  let area_id,quien;
+  if(iaOk&&areas.some(a=>a.id==r.area_id)){area_id=+r.area_id;quien='API ('+modelo+')'}
+  else{
+    if(iaOk)console.warn('   ⚠ La API no dio un area_id válido ('+r.area_id+') → entra el código local');
+    const g=guessArea(t,r.categoria);
+    if(g){area_id=g.id;quien='código local (guessArea, respaldo)'}
+    else{area_id=(areas[0]||{}).id;quien='⚠ POR DEFECTO (primera área, nadie decidió)'}
+  }
+  fuente.area=quien;
+  const an=(areas.find(a=>a.id==area_id)||{}).nombre;
+  console.log('%c4) ÁREA FINAL: '+an+'  ← decidió: '+quien,'font-weight:bold;color:'+(quien.startsWith('API')?'#10b981':'#d97706'));
+  console.log('%c5) RESPUESTA FINAL DE: '+(iaOk?modelo:'código local (la API falló)'),'font-weight:bold;background:#10b981;color:#fff;padding:2px 6px;border-radius:4px');
+  console.table(fuente);
+  console.groupEnd();
+  m.textContent=iaOk?'Revisa y guarda ✓ · IA: '+modelo+' · área: '+(quien.startsWith('API')?'IA':'respaldo local'):'Sin IA por ahora: lectura básica. Revisa los datos.';
   const ok=(v,a,d)=>a.includes(v)?v:d;
-  openForm(null,{titulo:String(r.titulo).slice(0,120),area_id:areas.some(a=>a.id==r.area_id)?+r.area_id:(guessArea(t,r.categoria)||areas[0]||{}).id,categoria:ok(r.categoria,CATS,'otro'),fecha:/^\d{4}-\d\d-\d\d$/.test(r.fecha)?r.fecha:iso(now),hora:r.hora||'',importancia:ok(+r.importancia,[1,2,3],2),esfuerzo:ok(+r.esfuerzo,[1,2,3],2),monto:r.monto>0?r.monto:null,repite:ok(r.repite,['no','semanal','mensual','anual'],'no'),notas:r.notas||''})}
+  openForm(null,{titulo:String(r.titulo).slice(0,120),area_id,categoria:ok(r.categoria,CATS,'otro'),fecha:/^\d{4}-\d\d-\d\d$/.test(r.fecha)?r.fecha:iso(now),hora:r.hora||'',importancia:ok(+r.importancia,[1,2,3],2),esfuerzo:ok(+r.esfuerzo,[1,2,3],2),monto:r.monto>0?r.monto:null,repite:ok(r.repite,['no','semanal','mensual','anual'],'no'),notas:r.notas||''})
+}
 function dictar(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition,m=$('#cap-msg');if(!SR){m.textContent='Tu navegador no permite dictado. Escribe la frase.';return}
   const r=new SR();r.lang='es-PE';r.onresult=e=>{$('#cap').value=e.results[0][0].transcript;capture()};r.onerror=()=>{m.textContent='No pude escuchar. Intenta de nuevo.'};m.textContent='Escuchando…';r.start()}
 
