@@ -223,16 +223,18 @@ async function drawAvisos(){
   const sub=await currentSub();
   if(sub){
     box.innerHTML='<p class="note ok" style="margin:0 0 8px">✓ Avisos activados en este dispositivo.</p>'+
-      '<input id="av-pass" type="password" placeholder="Contraseña (para desactivar)" autocomplete="current-password">'+
-      '<div class="err" id="av-err"></div><button class="sec" onclick="probarLocal()">🔔 Probar en este celular</button><button class="off" style="margin-top:8px" onclick="desactivarAvisos()">Desactivar avisos</button>';
+      '<div id="av-pw" style="display:none"><input id="av-pass" type="password" placeholder="Escribe tu contraseña para desactivar" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')$(\'av-go\').click()"></div>'+
+      '<div class="err" id="av-err"></div><button class="sec" onclick="probarLocal()">🔔 Probar en este celular</button><button id="av-go" class="off" style="margin-top:8px" onclick="desactivarAvisos(this)">Desactivar avisos</button>';
   }else{
-    box.innerHTML='<input id="av-pass" type="password" placeholder="Confirma tu contraseña" autocomplete="current-password">'+
-      '<div class="err" id="av-err"></div><button onclick="activarAvisos()">🔔 Activar avisos</button>'+
+    box.innerHTML='<div id="av-pw" style="display:none"><input id="av-pass" type="password" placeholder="Confirma tu contraseña" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')$(\'av-go\').click()"></div>'+
+      '<div class="err" id="av-err"></div><button id="av-go" onclick="activarAvisos(this)">🔔 Activar avisos</button>'+
       '<p class="note">Te avisaremos 1 día antes de un pago con monto, cuando un pendiente venza y cuando se te crucen dos tareas.</p>';
   }
 }
+function pedirPass(btn,txt){const w=$('av-pw');if(w&&w.style.display==='none'){w.style.display='';$('av-pass').focus();btn.textContent=txt;return true}return false}
 function avErr(m){const e=$('av-err');if(e)e.textContent=m||''}
-async function activarAvisos(){
+async function activarAvisos(btn){
+  if(pedirPass(btn,'Confirmar y activar'))return;
   const u=getUser(),p=$('av-pass').value;
   if(!p){avErr('Escribe tu contraseña');return}
   try{
@@ -253,7 +255,8 @@ async function probarLocal(){
     avErr('Notificación local lanzada. ¿Apareció?');
   }catch(e){avErr('Falló: '+e.message)}
 }
-async function desactivarAvisos(){
+async function desactivarAvisos(btn){
+  if(pedirPass(btn,'Confirmar y desactivar'))return;
   const u=getUser(),p=$('av-pass').value;
   if(!p){avErr('Escribe tu contraseña');return}
   try{
