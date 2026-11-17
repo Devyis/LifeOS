@@ -137,11 +137,13 @@ function localParse(t){const now=new Date(),l=t.toLowerCase(),add=n=>iso(new Dat
   const cat=/pag|recibo|luz|agua|alquiler/.test(l)?'pago':/cita|doctor|dentista|médico/.test(l)?'cita':/trámite|dni|renov/.test(l)?'trámite':'otro';
   const titulo=t.replace(/\s*(el |para )?(lunes|martes|miércoles|jueves|viernes|sábado|domingo|pasado mañana|mañana|hoy)/gi,'').replace(/s\/\.?\s*\d+([.,]\d+)?|\d+([.,]\d+)?\s*soles?/gi,'').replace(/\s+/g,' ').trim();
   return{titulo:titulo||t,fecha:f,hora,monto,categoria:cat,importancia:monto||cat==='pago'?3:2,esfuerzo:2,repite:'no'}}
+function guessArea(t,c){const l=(t+' '+(c||'')).toLowerCase(),by=re=>areas.find(a=>re.test(a.nombre.toLowerCase()));
+  return(/pag|recibo|luz|agua|internet|alquiler|tarjeta|deuda|cuota|dinero/.test(l)&&by(/finanz/))||(/cita|doctor|dentista|médic|medic|pastilla|vacuna|salud/.test(l)&&by(/salud/))||(/trámite|tramite|dni|renov|document|sunat|municip/.test(l)&&by(/tr[aá]mite/))||(/casa|hogar|limpi|arregl|gas|mantenim/.test(l)&&by(/hogar/))||(/cumple|familia|amig|regalo|reuni/.test(l)&&by(/familia/))||null}
 async function capture(){const t=$('#cap').value.trim();if(!t)return;const m=$('#cap-msg'),now=new Date();m.textContent='Entendiendo…';let r=null;
   try{r=(await ia({modo:'captura',texto:t,hoy:iso(now),dia:WD[now.getDay()],areas:areas.map(a=>({id:a.id,nombre:a.nombre}))})).resultado}catch(e){}
   if(!r||!r.titulo){r=localParse(t);m.textContent='Sin IA por ahora: lectura básica. Revisa los datos.'}else m.textContent='Revisa los datos y guarda ✓';
   const ok=(v,a,d)=>a.includes(v)?v:d;
-  openForm(null,{titulo:String(r.titulo).slice(0,120),area_id:areas.some(a=>a.id==r.area_id)?+r.area_id:(areas[0]||{}).id,categoria:ok(r.categoria,CATS,'otro'),fecha:/^\d{4}-\d\d-\d\d$/.test(r.fecha)?r.fecha:iso(now),hora:r.hora||'',importancia:ok(+r.importancia,[1,2,3],2),esfuerzo:ok(+r.esfuerzo,[1,2,3],2),monto:r.monto>0?r.monto:null,repite:ok(r.repite,['no','semanal','mensual','anual'],'no'),notas:r.notas||''})}
+  openForm(null,{titulo:String(r.titulo).slice(0,120),area_id:areas.some(a=>a.id==r.area_id)?+r.area_id:(guessArea(t,r.categoria)||areas[0]||{}).id,categoria:ok(r.categoria,CATS,'otro'),fecha:/^\d{4}-\d\d-\d\d$/.test(r.fecha)?r.fecha:iso(now),hora:r.hora||'',importancia:ok(+r.importancia,[1,2,3],2),esfuerzo:ok(+r.esfuerzo,[1,2,3],2),monto:r.monto>0?r.monto:null,repite:ok(r.repite,['no','semanal','mensual','anual'],'no'),notas:r.notas||''})}
 function dictar(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition,m=$('#cap-msg');if(!SR){m.textContent='Tu navegador no permite dictado. Escribe la frase.';return}
   const r=new SR();r.lang='es-PE';r.onresult=e=>{$('#cap').value=e.results[0][0].transcript;capture()};r.onerror=()=>{m.textContent='No pude escuchar. Intenta de nuevo.'};m.textContent='Escuchando…';r.start()}
 
