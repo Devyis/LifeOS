@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>LifeOS · Personal</title>
-<link rel="icon" type="image/png" href="icons/favicon-64.png">
+<link rel="icon" type="image/png" href="favicon-64.png">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#6366f1">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{--bg:#f6f7fb;--card:#fff;--tx:#161a2b;--mut:#6b7280;--bd:#e5e7eb;--ac:#10b981;--red:#dc2626;--amb:#d97706}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1220;--card:#181c30;--tx:#eef0fa;--mut:#9aa1b8;--bd:#2a3050}}
@@ -54,6 +54,11 @@ input,select,textarea{width:100%;padding:9px;border:1px solid var(--bd);border-r
 .c3{background:var(--bg);color:var(--mut)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cr{color:#f87171}:root:not([data-theme="light"]) .c1{color:#fbbf24}:root:not([data-theme="light"]) .c2{color:#60a5fa}}
 :root[data-theme="dark"] .cr{color:#f87171}:root[data-theme="dark"] .c1{color:#fbbf24}:root[data-theme="dark"] .c2{color:#60a5fa}
+.ch{border-left:5px solid var(--cc);padding:12px 14px}
+.ch b{display:block;font-size:15px}
+.ch small{display:block;color:var(--mut);margin-top:3px;line-height:1.4}
+.ch .sg{color:var(--tx);margin-top:6px}
+.ch .nv{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--cc);letter-spacing:.04em}
 </style>
 </head>
 <body>
@@ -77,6 +82,24 @@ function score(i){const d=days(i.fecha);const u=d<=0?10:d<=2?8:d<=7?5:d<=30?3:1;
 function sort(l){return [...l].sort((a,b)=>{const da=days(a.fecha),db=days(b.fecha);if(da<0||db<0){if(da<0&&db<0)return da-db;return da<0?-1:1}return score(b)-score(a)||da-db})}
 function why(i){const d=days(i.fecha);const h=i.hora?' a las '+String(i.hora).slice(0,5):(d<=1&&d>=0?' · todo el día':'');const w=d<0?'Vencido hace '+(-d)+(d==-1?' día':' días'):d==0?'Vence hoy'+h:d==1?'Vence mañana'+h:'En '+d+' días'+h;return w+' · importancia '+['','baja','media','alta'][i.importancia]}
 function next(f,r){const[y,m,d]=f.split('-').map(Number);if(r==='semanal')return iso(new Date(y,m-1,d+7));const ty=r==='anual'?y+1:y,tm=r==='anual'?m-1:m;const last=new Date(ty,tm+1,0).getDate();return iso(new Date(ty,tm,Math.min(d,last)))}
+let choques=[];
+const NV={alto:['#dc2626','Choque fuerte'],medio:['#d97706','Día cargado'],bajo:['#2563eb','Ojo con este día']};
+function choquesHtml(){
+  if(!choques.length)return '';
+  return '<h3>⚠ Choques entre áreas</h3>'+choques.slice(0,5).map(c=>{
+    const n=NV[c.nivel]||NV.bajo;
+    return `<div class="card ch" style="--cc:${n[0]}"><span class="nv">${n[1]}</span><b>${fdate(c.fecha)}</b>`+
+      c.motivos.map(m=>`<small>${esc(m)}</small>`).join('')+
+      `<small>${c.items.map(i=>(i.origen==='estudio'?'📚 ':'🏡 ')+esc(i.titulo)+(i.monto?' (S/ '+Number(i.monto).toFixed(2)+')':'')).join(' · ')}</small>`+
+      `<small class="sg">💡 ${esc(c.sugerencia)}</small></div>`}).join('');
+}
+async function refreshChoques(){
+  try{
+    const r=await fetch(URL_+'/rest/v1/rpc/lifeos_choques',{method:'POST',headers:H,body:JSON.stringify({p_username:user.username,p_dias:14})});
+    choques=r.ok?await r.json():[];
+  }catch(e){choques=[]}
+  const el=$('#choques');if(el)el.innerHTML=choquesHtml();
+}
 async function load(){
   const u=encodeURIComponent(user.username);
   areas=await api('personal_areas?username=eq.'+u+'&order=orden');
@@ -101,9 +124,10 @@ function render(){
   const porPagar=pend.filter(i=>i.monto&&i.fecha.startsWith(ym)).reduce((s,i)=>s+Number(i.monto),0);
   const hechasMes=items.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)).length;
   $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><span><button class="btn" onclick="planOpen()">📅 Plan de hoy</button> <button class="btn p" onclick="openForm()">+ Nueva</button></span></div><h1 style="margin-bottom:6px">Personal</h1><div class="card" style="display:flex;gap:6px;margin-bottom:4px"><input id="cap" placeholder="Escribe o dicta: pagar luz el viernes 80 soles" onkeydown="if(event.key==='Enter')capture()"><button class="btn" onclick="dictar()" title="Dictar">🎤</button><button class="btn p" onclick="capture()" title="Entender con IA">✨</button></div><div id="cap-msg" style="font-size:12px;color:var(--mut);min-height:16px;margin-bottom:4px"></div>
+  <div id="choques">${choquesHtml()}</div>
   <h3>Qué hacer primero</h3>${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}
   <h3>Tus áreas</h3><div class="grid">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><b>${esc(a.nombre)}</b><br><small style="color:var(--mut)">${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div>`).join('')}</div>
-  <h3>Resumen del mes</h3><div class="stats"><div class="card"><b>S/ ${porPagar.toFixed(2)}</b><small style="color:var(--mut)">por pagar este mes</small></div><div class="card"><b>${hechasMes}</b><small style="color:var(--mut)">actividades cumplidas</small></div></div>`}
+  <h3>Resumen del mes</h3><div class="stats"><div class="card"><b>S/ ${porPagar.toFixed(2)}</b><small style="color:var(--mut)">por pagar este mes</small></div><div class="card"><b>${hechasMes}</b><small style="color:var(--mut)">actividades cumplidas</small></div></div>`;refreshChoques()}
 let editId=null;
 function edit(id){const it=items.find(x=>x.id===id);if(it)openForm(null,it)}
 function openForm(aid,it){editId=it&&it.id?it.id:null;const v=it||{};const d=$('#dlg');
