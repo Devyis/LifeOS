@@ -17,7 +17,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--chip-cr:#ff8a8a;--chip-c1:#ffc15c;--chip-c2:#8bbcff}}
 :root[data-theme="dark"]{--chip-cr:#ff8a8a;--chip-c1:#ffc15c;--chip-c2:#8bbcff}
 body{padding:max(18px,env(safe-area-inset-top)) 16px max(32px,env(safe-area-inset-bottom))}
-main{max-width:700px;margin:0 auto}
+main{max-width:1180px;margin:0 auto}
 
 /* encabezado */
 .top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
@@ -82,15 +82,72 @@ h3{margin:28px 4px 12px;font:600 16px var(--f-head);color:var(--mut)}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .stats b{font:700 32px/1.1 var(--f-head);display:block;margin-bottom:2px}
 
+/* ===== tablero ===== */
+.hd{display:flex;align-items:baseline;justify-content:space-between;gap:6px 16px;flex-wrap:wrap;margin:2px 0 14px}
+.hd h1{margin:0}
+.hd .sub{color:var(--mut);font-size:14px}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 2px}
+.strip .area{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:22px}
+.strip .area .i{width:42px;height:42px;border-radius:14px;font-size:21px;margin:0;flex:none}
+.strip .area>div:last-child{position:relative;min-width:0}
+.strip .area b{display:block;font-size:15px;line-height:1.2}
+.strip .area small{color:var(--mut);font-size:12px}
+.strip .area::before{width:70px;height:70px;right:-20px;top:-20px}
+.dash{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start}
+.dash h3{margin:22px 4px 10px}
+.side{position:sticky;top:16px;display:grid;gap:14px}
+.side h3{margin:0 0 10px}
+.side .card{padding:16px}
+.tgrid,.mini,.chgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:12px}
+.mini{gap:8px}
+.tgrid>.empty,.mini>.empty{grid-column:1/-1}
+.tk{display:flex;flex-direction:column;gap:10px;padding:14px 14px 14px 16px;border-radius:24px;border-left:5px solid var(--ib,var(--bd))}
+.tk-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tk .chip{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;min-width:0;padding:5px 12px;border-radius:14px;text-align:left}
+.tk .chip .a{font-size:12px}.tk .chip .h{font-size:15px}.tk .chip .h.s{font-size:12px;line-height:1.4}.tk .chip .f{font-size:11px}
+.tk .acts{display:flex;flex:none}
+.tk .x{width:32px;height:32px;font-size:15px}
+.tk-b{display:flex;gap:12px;align-items:flex-start}
+.tk .chk{flex:none;width:30px;height:30px;font-size:14px}
+.tk .t{min-width:0}
+.tk .t b{display:block;font:600 16px/1.25 var(--f-head)}
+.tk .t small{display:block;color:var(--mut);font-size:12.5px;margin-top:3px}
+.tk .pl{margin:6px 6px 0 0}
+.mn{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 12px;border-radius:18px}
+.mn .chk{flex:none;width:26px;height:26px;font-size:13px}
+.mn .t{flex:1;min-width:0}
+.mn .t b{display:block;font:600 14px var(--f-head);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mn .t small{display:block;color:var(--mut);font-size:12px}
+.mn .w{flex:none;font-size:12px;color:var(--mut);font-weight:600}
+.mn .x{width:30px;height:30px;font-size:14px;flex:none}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sum b{display:block;font:700 26px/1.1 var(--f-head)}
+.sum small,.side .nota{color:var(--mut);font-size:12px}
+.bar{height:8px;border-radius:99px;background:var(--card2);overflow:hidden;margin:12px 0 6px}
+.bar i{display:block;height:100%;background:var(--ac);border-radius:99px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.cal .w{font-size:11px;color:var(--mut);padding-bottom:4px}
+.cal button{position:relative;aspect-ratio:1;border:0;border-radius:12px;background:none;color:var(--tx);font:500 13px var(--f-body);cursor:pointer;padding:0}
+.cal button:hover{background:var(--card2)}
+.cal .dot::after{content:"";position:absolute;left:50%;bottom:4px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--amb)}
+.cal .dr::after{background:var(--red)}
+.cal .hoy{background:var(--ac);color:var(--ac-tx);font-weight:700}
+.cal .hoy:hover{background:var(--ac)}
+.cal .hoy.dot::after{background:var(--ac-tx)}
+.pay{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--bd);font-size:14px}
+.pay:first-of-type{border-top:0;padding-top:0}
+.pay b{font-weight:600}.pay small{display:block;color:var(--mut);font-size:12px}
+.pay>span:last-child{font-weight:700;white-space:nowrap}
+@media (max-width:900px){
+  .dash{grid-template-columns:1fr}
+  .side{position:static;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));align-items:start}
+}
+
 /* formulario */
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 dialog .top{margin-bottom:6px}
 
 @media (max-width:520px){
-  .row.task{grid-template-columns:auto 1fr auto;grid-template-areas:"chk t acts" "chip chip chip";row-gap:12px}
-  .row.task .chip{display:flex;justify-content:center;align-items:baseline;gap:10px;padding:8px 14px;border-radius:16px}
-  .row.task .chip .h{font-size:17px}
-  .row.task .chip .h.s{font-size:13px}
   .two{grid-template-columns:1fr}
 }
 </style>
@@ -120,12 +177,12 @@ let choques=[];
 const NV={alto:['#dc2626','Conflicto de horario'],medio:['#b45309','Día cargado'],bajo:['#2563eb','Ojo con este día']};
 function choquesHtml(){
   if(!choques.length)return '';
-  return '<h3>⚠ Conflictos de horario</h3>'+choques.slice(0,5).map(c=>{
+  return '<h3>⚠ Conflictos de horario</h3><div class="chgrid">'+choques.slice(0,5).map(c=>{
     const n=[...(NV[c.nivel]||NV.bajo)];if(c.nivel==='medio'&&c.motivos.some(m=>/hora/.test(m)))n[1]='Conflicto de horario';
     return `<div class="card ch" style="--cc:${n[0]}"><span class="nv">${n[1]}</span><b>${fdate(c.fecha)}</b>`+
       c.motivos.map(m=>`<small>${esc(m)}</small>`).join('')+
       `<small>${c.items.map(i=>(i.origen==='estudio'?'📚 ':'🏡 ')+esc(i.titulo)+(i.monto?' (S/ '+Number(i.monto).toFixed(2)+')':'')).join(' · ')}</small>`+
-      `<small class="sg">💡 ${esc(c.sugerencia)}</small></div>`}).join('');
+      `<small class="sg">💡 ${esc(c.sugerencia)}</small></div>`}).join('')+'</div>';
 }
 async function refreshChoques(){
   try{
@@ -148,20 +205,37 @@ function chip(i){const d=days(i.fecha),h=i.hora?String(i.hora).slice(0,5):'';con
   return `<div class="chip ${cl}"><span class="a">${a}</span><span class="h${bs?' s':''}">${b}</span><span class="f">${f}</span></div>`}
 function row(i){const a=areas.find(x=>x.id===i.area_id)||{};
   const pills=(i.monto?`<span class="pl pm">S/ ${Number(i.monto).toFixed(2)}</span>`:'')+(i.repite!=='no'?`<span class="pl pg">↻ ${i.repite}</span>`:'');
-  return `<div class="card row task"><button class="chk" title="Marcar como hecha" onclick="done(${i.id})">✓</button><div class="t"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')} · ${i.categoria} · importancia ${['','baja','media','alta'][i.importancia]}</small>${pills?'<div>'+pills+'</div>':''}</div>${chip(i)}<span class="acts"><button class="x" title="Editar" onclick="edit(${i.id})">✏️</button><button class="x" title="Eliminar" onclick="del(${i.id})">🗑</button></span></div>`}
+  const ib=['','var(--bd)','var(--amb)','var(--red)'][i.importancia]||'var(--bd)';
+  return `<div class="card tk" style="--ib:${ib}"><div class="tk-h">${chip(i)}<span class="acts"><button class="x" title="Editar" onclick="edit(${i.id})">✏️</button><button class="x" title="Eliminar" onclick="del(${i.id})">🗑</button></span></div><div class="tk-b"><button class="chk" title="Marcar como hecha" onclick="done(${i.id})">✓</button><div class="t"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')} · ${i.categoria} · importancia ${['','baja','media','alta'][i.importancia]}</small>${pills?'<div>'+pills+'</div>':''}</div></div></div>`}
+function mini(i){const a=areas.find(x=>x.id===i.area_id)||{};
+  return `<div class="card mn"><button class="chk" title="Marcar como hecha" onclick="done(${i.id})">✓</button><div class="t"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')}${i.monto?' · S/ '+Number(i.monto).toFixed(2):''}</small></div><span class="w">${fdate(i.fecha)}</span><button class="x" title="Editar" onclick="edit(${i.id})">✏️</button></div>`}
+function calHtml(pend){const n=new Date(),y=n.getFullYear(),m=n.getMonth(),ym=iso(n).slice(0,7),first=(new Date(y,m,1).getDay()+6)%7,len=new Date(y,m+1,0).getDate(),by={};
+  pend.forEach(i=>{if(i.fecha.startsWith(ym)){const d=+i.fecha.slice(8);(by[d]=by[d]||[]).push(i)}});
+  let h='<div class="cal">'+['L','M','M','J','V','S','D'].map(d=>`<span class="w">${d}</span>`).join('')+'<span></span>'.repeat(first);
+  for(let d=1;d<=len;d++){const l=by[d]||[],c=(l.length?(d<n.getDate()?'dot dr':'dot'):'')+(d===n.getDate()?' hoy':'');
+    h+=`<button class="${c.trim()}" title="${l.length?esc(l.map(i=>i.titulo).join(', ')):'Agregar actividad este día'}" onclick="openForm(null,{fecha:'${ym}-${pad(d)}'})">${d}</button>`}
+  return h+'</div>'}
 function render(){
   if(!user||!user.username){location.replace('./');return}
-  const pend=items.filter(i=>!i.hecho);
-  if(view){const a=areas.find(x=>x.id===view);const l=sort(pend.filter(i=>i.area_id===view));
-    $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Personal</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><h1>${a.icono} ${esc(a.nombre)}</h1><h3>Pendientes (${l.length})</h3>${l.map(row).join('')||'<div class="card empty">Nada pendiente aquí.</div>'}`;return}
-  const top=sort(pend).slice(0,3);const now=new Date();const ym=iso(now).slice(0,7);
-  const porPagar=pend.filter(i=>i.monto&&i.fecha.startsWith(ym)).reduce((s,i)=>s+Number(i.monto),0);
-  const hechasMes=items.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)).length;
-  $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><span><button class="btn" onclick="planOpen()">📅 Plan de hoy</button> <button class="btn p" onclick="openForm()">+ Nueva</button></span></div><h1>Personal</h1><div class="card capbar"><input id="cap" placeholder="Escribe o dicta: pagar luz el viernes 80 soles" onkeydown="if(event.key==='Enter')capture()"><button class="btn ic" onclick="dictar()" title="Dictar">🎤</button><button class="btn p ic" onclick="capture()" title="Entender con IA">✨</button></div><div id="cap-msg" style="font-size:12px;color:var(--mut);min-height:16px;margin-bottom:4px"></div>
-  <div id="choques">${choquesHtml()}</div>
-  <h3>Qué hacer primero</h3>${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}
-  <h3>Tus áreas</h3><div class="grid">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><b>${esc(a.nombre)}</b><br><small style="color:var(--mut)">${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div>`).join('')}</div>
-  <h3>Resumen del mes</h3><div class="stats"><div class="card"><b>S/ ${porPagar.toFixed(2)}</b><small style="color:var(--mut)">por pagar este mes</small></div><div class="card"><b>${hechasMes}</b><small style="color:var(--mut)">actividades cumplidas</small></div></div>`;refreshChoques()}
+  const pend=items.filter(i=>!i.hecho),now=new Date(),ym=iso(now).slice(0,7);
+  const mesDe=l=>({por:l.filter(i=>!i.hecho&&i.monto&&i.fecha.startsWith(ym)).reduce((t,i)=>t+Number(i.monto),0),ok:l.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)).length});
+  if(view){const a=areas.find(x=>x.id===view),l=sort(pend.filter(i=>i.area_id===view)),s=mesDe(items.filter(i=>i.area_id===view));
+    $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Personal</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><div class="hd"><h1>${a.icono} ${esc(a.nombre)}</h1><span class="sub">${l.length} pendientes · S/ ${s.por.toFixed(2)} por pagar este mes · ${s.ok} cumplidas</span></div><div class="tgrid">${l.map(row).join('')||'<div class="card empty">Nada pendiente aquí.</div>'}</div>`;return}
+  const s=mesDe(items),srt=sort(pend),top=srt.slice(0,4),rest=srt.slice(4,12);
+  const pm=pend.filter(i=>i.fecha.startsWith(ym)).length,pct=s.ok+pm?Math.round(100*s.ok/(s.ok+pm)):0;
+  const pagos=pend.filter(i=>i.monto&&days(i.fecha)>=0).sort((x,y)=>x.fecha.localeCompare(y.fecha)).slice(0,4);
+  $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><span><button class="btn" onclick="planOpen()">📅 Plan de hoy</button> <button class="btn p" onclick="openForm()">+ Nueva</button></span></div>
+  <div class="hd"><h1>Personal</h1><span class="sub">${fdate(iso(now))} · ${pend.length} pendientes</span></div>
+  <div class="card capbar"><input id="cap" placeholder="Escribe o dicta: pagar luz el viernes 80 soles" onkeydown="if(event.key==='Enter')capture()"><button class="btn ic" onclick="dictar()" title="Dictar">🎤</button><button class="btn p ic" onclick="capture()" title="Entender con IA">✨</button></div><div id="cap-msg" style="font-size:12px;color:var(--mut);min-height:16px;margin-bottom:4px"></div>
+  <div class="strip">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><div><b>${esc(a.nombre)}</b><small>${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div></div>`).join('')}</div>
+  <div class="dash"><div class="mainc"><div id="choques">${choquesHtml()}</div>
+    <h3>Qué hacer primero</h3><div class="tgrid">${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}</div>
+    ${rest.length?`<h3>Más adelante</h3><div class="mini">${rest.map(mini).join('')}</div>`:''}</div>
+  <aside class="side">
+    <div class="card"><h3>Resumen de ${MN[now.getMonth()]}</h3><div class="sum"><div><b>S/ ${s.por.toFixed(2)}</b><small>por pagar este mes</small></div><div><b>${s.ok}</b><small>actividades cumplidas</small></div></div><div class="bar"><i style="width:${pct}%"></i></div><span class="nota">${s.ok} de ${s.ok+pm} del mes (${pct}%)</span></div>
+    <div class="card"><h3>Calendario</h3>${calHtml(pend)}</div>
+    ${pagos.length?`<div class="card"><h3>Próximos pagos</h3>${pagos.map(i=>`<div class="pay"><span><b>${esc(i.titulo)}</b><small>${fdate(i.fecha)}</small></span><span>S/ ${Number(i.monto).toFixed(2)}</span></div>`).join('')}</div>`:''}
+  </aside></div>`;refreshChoques()}
 let editId=null;
 function edit(id){const it=items.find(x=>x.id===id);if(it)openForm(null,it)}
 function openForm(aid,it){editId=it&&it.id?it.id:null;const v=it||{};const d=$('#dlg');
