@@ -31,8 +31,11 @@ h3{margin:28px 4px 12px;font:600 16px var(--f-head);color:var(--mut)}
 .empty{color:var(--mut);padding:24px;text-align:center}
 
 /* captura rápida */
-.capbar{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 22px;border-radius:999px;box-shadow:var(--shadow)}
-.capbar:focus-within{border-color:var(--ac)}
+.cap-lbl{font:700 13px var(--f-body);color:var(--ac);margin:0 6px 8px}
+.capbar{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 22px;border-radius:999px;border:2px solid var(--ac);box-shadow:0 0 0 4px var(--card2),0 0 0 4px color-mix(in srgb,var(--ac) 16%,transparent),0 10px 28px -6px color-mix(in srgb,var(--ac) 45%,transparent)}
+.capbar:focus-within{box-shadow:0 0 0 5px var(--card2),0 0 0 5px color-mix(in srgb,var(--ac) 24%,transparent),0 12px 32px -6px color-mix(in srgb,var(--ac) 60%,transparent)}
+.capbar input{font-size:16px;font-weight:600}
+.capbar input::placeholder{color:var(--mut);opacity:1;font-weight:500}
 .capbar input{flex:1;min-width:0;border:0;border-radius:0;background:transparent;padding:10px 0}
 .capbar input:focus-visible{outline:none}
 
@@ -227,7 +230,7 @@ function render(){
   const pagos=pend.filter(i=>i.monto&&days(i.fecha)>=0).sort((x,y)=>x.fecha.localeCompare(y.fecha)).slice(0,4);
   $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><span><button class="btn" onclick="planOpen()">📅 Plan de hoy</button> <button class="btn p" onclick="openForm()">+ Nueva</button></span></div>
   <div class="hd"><h1>Personal</h1><span class="sub">${fdate(iso(now))} · ${pend.length} pendientes</span></div>
-  <div class="card capbar"><input id="cap" placeholder="Escribe o dicta: pagar luz el viernes 80 soles" onkeydown="if(event.key==='Enter')capture()"><button class="btn ic" onclick="dictar()" title="Dictar">🎤</button><button class="btn p ic" onclick="capture()" title="Entender con IA">✨</button></div><div id="cap-msg" style="font-size:12px;color:var(--mut);min-height:16px;margin-bottom:0"></div>
+  <div class="cap-lbl">✨ Escribe o dicta y la IA lo ordena</div><div class="card capbar"><input id="cap" placeholder="Escribe o dicta: pagar luz el viernes 80 soles" onkeydown="if(event.key==='Enter')capture()"><button class="btn ic" onclick="dictar()" title="Dictar">🎤</button><button class="btn p ic" onclick="capture()" title="Entender con IA">✨</button></div><div id="cap-msg" style="font-size:12px;color:var(--mut);min-height:16px;margin-bottom:0"></div>
   <div class="strip">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><div><b>${esc(a.nombre)}</b><small>${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div></div>`).join('')}</div>
   <div class="dash"><div class="mainc"><div id="choques">${choquesHtml()}</div>
     <h3>Qué hacer primero</h3><div class="tgrid">${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}</div>
