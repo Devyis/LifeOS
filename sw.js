@@ -8,8 +8,8 @@ self.addEventListener('push', e => {
   const title = d.title || 'LifeOS';
   e.waitUntil(self.registration.showNotification(title, {
     body: d.body || '',
-    icon: new URL('icons/icon-192.png', self.registration.scope).href,
-    badge: new URL('icons/badge-96.png', self.registration.scope).href,
+    icon: new URL('icon-192.png', self.registration.scope).href,
+    badge: new URL('badge-96.png', self.registration.scope).href,
     data: { url: d.url || 'personal.html' }
   }));
 });
