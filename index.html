@@ -81,6 +81,10 @@ a.card:hover::before{transform:scale(1.15)}
 .pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;background:var(--card2);border:1px solid var(--bd);margin-left:6px}
 .ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
 
+.hd-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.theme-btn{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:21px;cursor:pointer;display:grid;place-items:center;box-shadow:var(--shadow);transition:transform .2s,border-color .2s}
+.theme-btn:hover{border-color:var(--brand);transform:rotate(15deg)}
+.theme-btn:active{transform:scale(.92)}
 @keyframes unfold{from{opacity:0;transform:translateY(26px) scale(.97)}to{opacity:1;transform:none}}
 </style>
 </head>
@@ -96,7 +100,7 @@ a.card:hover::before{transform:scale(1.15)}
 </div>
 <main id="shell" style="display:none">
   <header class="hd">
-    <h1 id="hi">LifeOS</h1>
+    <div class="hd-row"><h1 id="hi">LifeOS</h1><button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar modo día/noche" aria-label="Cambiar modo día/noche">🌙</button></div>
     <p class="sub">Elige un área para ver tus pendientes y saber qué hacer primero.</p>
   </header>
   <div class="tabs" id="tabs" style="display:none"></div>
@@ -143,6 +147,12 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 const $=id=>document.getElementById(id);
 function getUser(){try{return JSON.parse(localStorage.getItem('lifeos_user'))}catch(e){return null}}
 function setErr(m){const e=$('au-err');if(e)e.textContent=m||''}
+
+/* ---------- TEMA DÍA / NOCHE ---------- */
+function curDark(){var a=document.documentElement.getAttribute('data-theme');return a?a==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches}
+function paintTheme(){var b=document.getElementById('theme-btn');if(b)b.textContent=curDark()?'☀️':'🌙'}
+function toggleTheme(){var d=!curDark();document.documentElement.setAttribute('data-theme',d?'dark':'light');try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}paintTheme()}
+paintTheme();
 
 /* ---------- SERVICE WORKER ---------- */
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
