@@ -154,6 +154,17 @@ dialog .top{margin-bottom:6px}
 @media (max-width:520px){
   .two{grid-template-columns:1fr}
 }
+
+/* captura múltiple */
+.mrow{border:1.5px solid var(--bd);border-radius:18px;padding:12px;margin-bottom:10px;background:var(--card2)}
+.mrow.off{opacity:.45}
+.mh{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;font-weight:700;color:var(--mut)}
+.mh select{flex:1}
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mg .full{grid-column:1/-1}
+.mrow input,.mrow select{width:100%}
+.mh input[type=checkbox]{width:auto}
+.mlist{max-height:58vh;overflow:auto;margin-top:10px}
 </style>
 </head>
 <body>
@@ -165,7 +176,7 @@ const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json
 const api=async(p,o={})=>{const r=await fetch(URL_+'/rest/v1/'+p,{headers:H,...o});if(!r.ok)throw new Error(await r.text());return r.status===204?null:r.json()};
 const DEF=[['Salud','🩺','#ef4444'],['Hogar','🏠','#3b82f6'],['Finanzas','💳','#10b981'],['Trámites','📄','#f59e0b'],['Familia y social','👨‍👩‍👧','#8b5cf6']];
 const CATS=['cita','pago','trámite','compromiso','otro'];
-let user,areas=[],items=[],view=null;
+let user,areas=[],items=[],cursos=[],view=null;
 try{const t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}
 try{user=JSON.parse(localStorage.getItem('lifeos_user'))}catch(e){}
 const $=s=>document.querySelector(s);
@@ -200,6 +211,7 @@ async function load(){
   areas=await api('personal_areas?username=eq.'+u+'&order=orden');
   if(!areas.length){areas=await api('personal_areas',{method:'POST',body:JSON.stringify(DEF.map((a,i)=>({username:user.username,nombre:a[0],icono:a[1],color:a[2],orden:i})))})}
   items=await api('personal_items?username=eq.'+u+'&order=fecha');
+  try{cursos=await api('courses?username=eq.'+u+'&select=id,name,icon&order=orden')}catch(e){cursos=[]}
 }
 const DN=['dom','lun','mar','mié','jue','vie','sáb'],MN=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 function fdate(f){const[y,m,d]=f.split('-').map(Number);const t=new Date(y,m-1,d);return DN[t.getDay()]+' '+d+' '+MN[m-1]}
@@ -286,7 +298,7 @@ function localParse(t){const now=new Date(),l=t.toLowerCase(),add=n=>iso(new Dat
   return{dm:!!dmf(l),titulo:titulo||t,fecha:f,hora,monto,categoria:cat,importancia:monto||cat==='pago'?3:2,esfuerzo:2,repite:'no'}}
 function guessArea(t,c){const l=(t+' '+(c||'')).toLowerCase(),by=re=>areas.find(a=>re.test(a.nombre.toLowerCase()));
   return(/pag|recibo|luz|agua|internet|alquiler|tarjeta|deuda|cuota|dinero/.test(l)&&by(/finanz/))||(/cita|doctor|dentista|médic|medic|pastilla|vacuna|salud/.test(l)&&by(/salud/))||(/trámite|tramite|dni|renov|document|sunat|municip/.test(l)&&by(/tr[aá]mite/))||(/casa|hogar|limpi|arregl|gas|mantenim/.test(l)&&by(/hogar/))||(/cumple|familia|amig|regalo|reuni|fiesta|salir|salida|paseo|cine|concierto|social|visita|viaje|discoteca|karaoke|boda/.test(l)&&by(/familia/))||null}
-async function capture(){
+async function captureUna(){
   const t=$('#cap').value.trim();if(!t)return;
   const m=$('#cap-msg'),now=new Date();m.textContent='Entendiendo…';
   const fuente={},CAMPOS=['titulo','categoria','fecha','hora','importancia','esfuerzo','monto','repite'];
@@ -335,6 +347,115 @@ async function capture(){
   m.textContent=iaOk?'Revisa los datos y guarda ✓':'Sin IA por ahora: lectura básica. Revisa los datos.';
   const ok=(v,a,d)=>a.includes(v)?v:d;
   openForm(null,{titulo:String(r.titulo).slice(0,120),area_id,categoria:ok(r.categoria,CATS,'otro'),fecha:/^\d{4}-\d\d-\d\d$/.test(r.fecha)?r.fecha:iso(now),hora:r.hora||'',importancia:ok(+r.importancia,[1,2,3],2),esfuerzo:ok(+r.esfuerzo,[1,2,3],2),monto:r.monto>0?r.monto:null,repite:ok(r.repite,['no','semanal','mensual','anual'],'no'),notas:r.notas||''})
+}
+
+/* ===== captura múltiple: una frase -> varias actividades (personal y/o estudio) ===== */
+let multi=[];
+const CE=[['tarea','📋 Tarea'],['examen','📝 Examen'],['exposicion','🎤 Exposición']];
+const REG_EST=/tarea|examen|parcial|exposici|pr[aá]ctica|laboratorio|\blab\b|trabajo (?:de|del|grupal)|entrega/i;
+function cursoLocal(t){const l=t.toLowerCase();return cursos.filter(c=>l.includes(String(c.name).toLowerCase())).sort((a,b)=>b.name.length-a.name.length)[0]||null}
+function normItem(x,t){
+  const now=new Date();
+  const base={on:true,destino:x.destino==='estudio'?'estudio':'personal',titulo:String(x.titulo||'').slice(0,120),fecha:/^\d{4}-\d\d-\d\d$/.test(x.fecha||'')?x.fecha:iso(now),hora:x.hora||''};
+  if(base.destino==='estudio'){
+    const c=x.curso_id!=null&&cursos.find(k=>String(k.id)===String(x.curso_id))||cursoLocal(x.fragmento||t);
+    return{...base,categoria:CE.some(e=>e[0]===x.categoria)?x.categoria:'tarea',cur:c?String(c.id):(x.curso_nuevo?'new':''),curso_nuevo:c?'':(x.curso_nuevo||'')};
+  }
+  const g=areas.some(a=>a.id==x.area_id)?{id:+x.area_id}:(guessArea(base.titulo,x.categoria)||areas[0]||{});
+  return{...base,area_id:g.id,categoria:CATS.includes(x.categoria)?x.categoria:'otro',importancia:[1,2,3].includes(+x.importancia)?+x.importancia:2,esfuerzo:[1,2,3].includes(+x.esfuerzo)?+x.esfuerzo:2,monto:+x.monto>0?+x.monto:null,repite:['no','semanal','mensual','anual'].includes(x.repite)?x.repite:'no'};
+}
+async function capture(){
+  const t=$('#cap').value.trim();if(!t)return;
+  const m=$('#cap-msg'),now=new Date();m.textContent='Entendiendo…';
+  let resp=null;
+  try{
+    const r=await fetch(URL_+'/functions/v1/lifeos-captura',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify({texto:t,hoy:iso(now),dia:WD[now.getDay()],areas:areas.map(a=>({id:a.id,nombre:a.nombre})),cursos:cursos.map(c=>({id:c.id,name:c.name}))})});
+    resp=await r.json();if(resp.error)throw new Error(resp.error);
+    console.log('[LifeOS] captura múltiple:',resp);
+  }catch(e){console.warn('[LifeOS] captura múltiple falló:',e.message);resp=null}
+  const its=resp&&resp.resultado&&resp.resultado.items;
+  if(!its||!its.length){
+    // sin IA o sin resultados: respaldo local (una sola actividad); si suena a estudio y hay curso, lo manda a estudio
+    const lp=localParse(t),c=cursoLocal(t);
+    if(REG_EST.test(t)&&cursos.length){
+      multi=[normItem({destino:'estudio',titulo:lp.titulo,fecha:lp.fecha,hora:lp.hora,categoria:/examen|parcial/i.test(t)?'examen':/exposici/i.test(t)?'exposicion':'tarea',curso_id:c?c.id:null,fragmento:t},t)];
+      m.textContent='Sin IA por ahora: lectura básica. Revisa los datos.';multiRender();$('#dlg').showModal();return;
+    }
+    return captureUna();
+  }
+  multi=its.map(x=>normItem(x,t));
+  if(multi.length===1&&multi[0].destino==='personal'){
+    const x=multi[0];m.textContent='Revisa los datos y guarda ✓';
+    openForm(null,{titulo:x.titulo,area_id:x.area_id,categoria:x.categoria,fecha:x.fecha,hora:x.hora,importancia:x.importancia,esfuerzo:x.esfuerzo,monto:x.monto,repite:x.repite,notas:''});return;
+  }
+  m.textContent='';multiRender();$('#dlg').showModal();
+}
+function multiRender(){
+  const nP=multi.filter(x=>x.on&&x.destino==='personal').length,nE=multi.filter(x=>x.on&&x.destino==='estudio').length;
+  $('#dlg').innerHTML=`<div class="top"><b>✨ ${multi.length} actividades detectadas</b><button class="x" onclick="$('#dlg').close()">✕</button></div>
+  <div style="font-size:12px;color:var(--mut)">Revisa, cambia el destino si hace falta o desmarca lo que no quieras.</div>
+  <div class="mlist">${multi.map((x,i)=>{
+    const chk=`<input type="checkbox" ${x.on?'checked':''} onchange="mSet(${i},'on',this.checked,1)">`;
+    const dest=`<select onchange="mDest(${i},this.value)"><option value="personal" ${x.destino==='personal'?'selected':''}>🏡 Personal</option><option value="estudio" ${x.destino==='estudio'?'selected':''}>📚 Estudio</option></select>`;
+    const comun=`<input class="full" value="${esc(x.titulo)}" maxlength="120" onchange="mSet(${i},'titulo',this.value)"><input type="date" value="${esc(x.fecha)}" onchange="mSet(${i},'fecha',this.value)"><input type="time" value="${esc(x.hora)}" onchange="mSet(${i},'hora',this.value)" title="Hora (opcional)">`;
+    let esp;
+    if(x.destino==='estudio'){
+      const co='<option value="">Elige el curso…</option>'+cursos.map(c=>`<option value="${c.id}" ${x.cur===String(c.id)?'selected':''}>${esc(c.icon||'📚')} ${esc(c.name)}</option>`).join('')+(x.curso_nuevo?`<option value="new" ${x.cur==='new'?'selected':''}>➕ Crear curso «${esc(x.curso_nuevo)}»</option>`:'');
+      esp=`<select class="full" onchange="mSet(${i},'cur',this.value)">${co}</select><select class="full" onchange="mSet(${i},'categoria',this.value)">${CE.map(e=>`<option value="${e[0]}" ${x.categoria===e[0]?'selected':''}>${e[1]}</option>`).join('')}</select>`;
+    }else{
+      esp=`<select onchange="mSet(${i},'area_id',+this.value)">${areas.map(a=>`<option value="${a.id}" ${a.id==x.area_id?'selected':''}>${a.icono} ${esc(a.nombre)}</option>`).join('')}</select><select onchange="mSet(${i},'categoria',this.value)">${CATS.map(c=>`<option ${c===x.categoria?'selected':''}>${c}</option>`).join('')}</select><input type="number" step="0.01" min="0" placeholder="Monto S/" value="${x.monto??''}" onchange="mSet(${i},'monto',this.value?+this.value:null)"><select onchange="mSet(${i},'importancia',+this.value)">${[[1,'Baja'],[2,'Media'],[3,'Alta']].map(o=>`<option value="${o[0]}" ${x.importancia===o[0]?'selected':''}>Importancia ${o[1].toLowerCase()}</option>`).join('')}</select>`;
+    }
+    return `<div class="mrow ${x.on?'':'off'}"><div class="mh">${chk}${dest}</div><div class="mg">${comun}${esp}</div></div>`}).join('')}</div>
+  <p id="f-err" style="color:var(--red);font-size:13px;margin:8px 0 0"></p>
+  <button class="btn p" id="m-save" style="width:100%;margin-top:10px" onclick="multiSave()">Guardar ${nP+nE||''} ${nP+nE===1?'actividad':'actividades'}${nP&&nE?` (${nP} personal · ${nE} estudio)`:''}</button>`;
+}
+function mSet(i,k,v,re){multi[i][k]=v;if(k==='cur'&&v!=='new')multi[i].curso_nuevo=multi[i].curso_nuevo;if(re||k==='cur')multiRender()}
+function mDest(i,d){const x=multi[i];x.destino=d;
+  if(d==='estudio'){if(!CE.some(e=>e[0]===x.categoria))x.categoria=/examen|parcial/i.test(x.titulo)?'examen':/exposici/i.test(x.titulo)?'exposicion':'tarea';const c=cursoLocal(x.titulo);x.cur=c?String(c.id):'';x.curso_nuevo=x.curso_nuevo||''}
+  else{if(!CATS.includes(x.categoria))x.categoria='otro';const g=guessArea(x.titulo,x.categoria)||areas[0]||{};x.area_id=x.area_id||g.id;x.importancia=x.importancia||2;x.esfuerzo=x.esfuerzo||2;x.monto=x.monto??null;x.repite=x.repite||'no'}
+  multiRender()}
+async function multiSave(){
+  const err=$('#f-err'),btn=$('#m-save');err.textContent='';
+  const on=multi.filter(x=>x.on);if(!on.length){err.textContent='No hay nada seleccionado.';return}
+  for(const x of on){
+    if(!x.titulo.trim()||!x.fecha){err.textContent='Falta título o fecha en «'+(x.titulo||'una actividad')+'».';return}
+    if(x.destino==='estudio'&&!x.cur){err.textContent='Elige el curso de «'+x.titulo+'».';return}
+  }
+  btn.disabled=true;btn.textContent='Guardando…';
+  const saved=new Set();let nP=0,nE=0,k=0;
+  try{
+    // personales en un solo envío
+    const per=on.filter(x=>x.destino==='personal');
+    if(per.length){
+      const r=await api('personal_items',{method:'POST',body:JSON.stringify(per.map(x=>({username:user.username,area_id:x.area_id,titulo:x.titulo.trim(),categoria:x.categoria,fecha:x.fecha,hora:x.hora||null,importancia:x.importancia,esfuerzo:x.esfuerzo,monto:x.monto||null,repite:x.repite,notas:''})))});
+      items.push(...r);per.forEach(x=>saved.add(x));nP=per.length;
+    }
+    // estudio: crea cursos nuevos una sola vez por nombre y luego las tareas
+    const nuevos={};
+    for(const x of on.filter(y=>y.destino==='estudio')){
+      let cid=x.cur;
+      if(cid==='new'){
+        const nm=x.curso_nuevo.trim(),key=nm.toLowerCase();
+        if(!nuevos[key]){
+          const pal=[['#3b5bdb','#e8edff'],['#e67700','#fff3e0'],['#7048e8','#f3f0ff'],['#0c8599','#e3fafc'],['#2f9e44','#ebfbee']][cursos.length%5];
+          const r=await api('courses',{method:'POST',body:JSON.stringify({username:user.username,name:nm,icon:'📚',color:pal[0],bg:pal[1],orden:cursos.length})});
+          cursos.push({id:r[0].id,name:nm,icon:'📚'});nuevos[key]=r[0].id;
+        }
+        cid=nuevos[key];
+      }
+      let dt=null;if(x.hora){const[h,mi]=x.hora.split(':').map(Number);dt=pad(h%12||12)+':'+pad(mi)+':'+(h>=12?'PM':'AM')}
+      await api('tasks',{method:'POST',body:JSON.stringify({id:Date.now()+(k++),username:user.username,course_id:cid,name:x.titulo.trim(),deadline:x.fecha,deadline_time:dt,description:'',entrega:'',desc_images:[],pdfs:{teoria:[],tarea:[],adjuntos:[]},categoria:x.categoria||'tarea'})});
+      saved.add(x);nE++;
+    }
+    $('#dlg').close();$('#cap').value='';
+    $('#cap-msg').textContent='Listo ✓ '+(nP?nP+' personal'+(nP>1?'es':''):'')+(nP&&nE?' · ':'')+(nE?nE+' de estudio':'');
+    render();
+  }catch(e){
+    multi=multi.filter(x=>!saved.has(x));
+    if(saved.size)render();
+    if(multi.length){multiRender();$('#f-err').textContent='No se pudo guardar todo. Lo ya guardado se quitó de la lista; reintenta el resto.'}
+    else{$('#dlg').close();alert('No se pudo guardar.')}
+  }
 }
 function dictar(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition,m=$('#cap-msg');if(!SR){m.textContent='Tu navegador no permite dictado. Escribe la frase.';return}
   const r=new SR();r.lang='es-PE';r.onresult=e=>{$('#cap').value=e.results[0][0].transcript;capture()};r.onerror=()=>{m.textContent='No pude escuchar. Intenta de nuevo.'};m.textContent='Escuchando…';r.start()}
