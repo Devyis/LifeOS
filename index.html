@@ -81,6 +81,12 @@ a.card:hover::before{transform:scale(1.15)}
 .pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;background:var(--card2);border:1px solid var(--bd);margin-left:6px}
 .ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
 
+.brand-row{display:flex;align-items:center;gap:14px;min-width:0}
+.logo-slot{position:relative;flex:none;width:60px;height:60px;border-radius:20px;border:2px dashed var(--bd);background:var(--card2);display:grid;place-items:center;overflow:hidden}
+.logo-slot em{font:700 11px var(--f-body);font-style:normal;letter-spacing:.08em;color:var(--mut)}
+.logo-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.logo-slot.ok{border:0;background:none}
+.logo-slot.ok em{display:none}
 .hd-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .theme-btn{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:21px;cursor:pointer;display:grid;place-items:center;box-shadow:var(--shadow);transition:transform .2s,border-color .2s}
 .theme-btn:hover{border-color:var(--brand);transform:rotate(15deg)}
@@ -100,7 +106,7 @@ a.card:hover::before{transform:scale(1.15)}
 </div>
 <main id="shell" style="display:none">
   <header class="hd">
-    <div class="hd-row"><h1 id="hi">LifeOS</h1><button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar modo día/noche" aria-label="Cambiar modo día/noche">🌙</button></div>
+    <div class="hd-row"><div class="brand-row"><span class="logo-slot" title="Aquí va el logo de LifeOS (archivo logo.png)"><em>LOGO</em><img src="logo.png" alt="LifeOS" onload="this.parentNode.classList.add('ok')" onerror="this.remove()"></span><h1 id="hi">LifeOS</h1></div><button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar modo día/noche" aria-label="Cambiar modo día/noche">🌙</button></div>
     <p class="sub">Elige un área para ver tus pendientes y saber qué hacer primero.</p>
   </header>
   <div class="tabs" id="tabs" style="display:none"></div>
