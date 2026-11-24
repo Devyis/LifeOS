@@ -106,7 +106,7 @@ a.card:hover::before{transform:scale(1.15)}
 </div>
 <main id="shell" style="display:none">
   <header class="hd">
-    <div class="hd-row"><div class="brand-row"><span class="logo-slot" title="Aquí va el logo de LifeOS (archivo logo.png)"><em>LOGO</em><img src="logo.png" alt="LifeOS" onload="this.parentNode.classList.add('ok')" onerror="this.remove()"></span><h1 id="hi">LifeOS</h1></div><button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar modo día/noche" aria-label="Cambiar modo día/noche">🌙</button></div>
+    <div class="hd-row"><div class="brand-row"><span class="logo-slot" title="Aquí va el logo de LifeOS (archivo logo.png)"><em>LOGO</em><img id="logo-img" src="logo.png" alt="LifeOS" onload="this.parentNode.classList.add('ok')" onerror="logoErr(this)"></span><h1 id="hi">LifeOS</h1></div><button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar modo día/noche" aria-label="Cambiar modo día/noche">🌙</button></div>
     <p class="sub">Elige un área para ver tus pendientes y saber qué hacer primero.</p>
   </header>
   <div class="tabs" id="tabs" style="display:none"></div>
@@ -156,7 +156,8 @@ function setErr(m){const e=$('au-err');if(e)e.textContent=m||''}
 
 /* ---------- TEMA DÍA / NOCHE ---------- */
 function curDark(){var a=document.documentElement.getAttribute('data-theme');return a?a==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches}
-function paintTheme(){var b=document.getElementById('theme-btn');if(b)b.textContent=curDark()?'☀️':'🌙'}
+function paintTheme(){var b=document.getElementById('theme-btn');if(b)b.textContent=curDark()?'☀️':'🌙';var l=document.getElementById('logo-img');if(l){var w=(curDark()||l.dataset.nodia)?'logo.png':'logo-dia.png';if(!l.src.endsWith(w))l.src=w}}
+function logoErr(i){if(/logo-dia\.png$/.test(i.src)){i.dataset.nodia='1';i.src='logo.png'}else i.remove()}
 function toggleTheme(){var d=!curDark();document.documentElement.setAttribute('data-theme',d?'dark':'light');try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}paintTheme()}
 paintTheme();
 
