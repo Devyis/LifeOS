@@ -169,6 +169,28 @@ dialog .top{margin-bottom:6px}
 .res>div{padding:0 14px;border-left:1px solid var(--bd)}.res>div:first-child{padding-left:0;border:0}
 .res b{display:block;font:700 30px/1.1 var(--f-head)}.res small{display:block;color:var(--mut);font-size:12px;margin:2px 0 10px}
 .rb{height:6px;border-radius:99px;background:var(--card2);overflow:hidden}.rb i{display:block;height:100%;border-radius:99px}
+.lst{padding:18px 20px}.lh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.lh b,.eh b{font:600 18px var(--f-head)}
+.tabs{display:flex;gap:6px}.tabs button{border:1px solid var(--bd);background:none;border-radius:999px;padding:6px 14px;font:600 13px var(--f-body);color:var(--tx);cursor:pointer}
+.tabs button.on{background:var(--ac);border-color:var(--ac);color:var(--ac-tx)}
+.lr{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid var(--bd);flex-wrap:wrap}
+.lr .chk{flex:none;width:26px;height:26px;font-size:13px}
+.li{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px;background:var(--card2);background:color-mix(in srgb,var(--c) 20%,transparent)}
+.lt{flex:1;min-width:150px}.lt b{display:block;font:600 15px/1.25 var(--f-head)}.lt small{color:var(--mut);font-size:12px}
+.pri{font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:var(--card2);color:var(--mut)}
+.pri.hi{background:var(--card2);background:color-mix(in srgb,var(--red) 16%,transparent);color:var(--red)}
+.lw{font-size:13px;color:var(--mut);white-space:nowrap}.lw.ov{color:var(--red);font-weight:600}
+.mnu{position:relative}.mnu summary{list-style:none;cursor:pointer;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--mut);font-size:18px}
+.mnu summary::-webkit-details-marker{display:none}.mnu summary:hover{background:var(--card2)}
+.mnu div{position:absolute;right:0;top:100%;z-index:6;min-width:140px;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:4px;box-shadow:0 8px 24px #0002}
+.mnu div button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 12px;border-radius:10px;cursor:pointer;color:var(--tx);font:500 13px var(--f-body)}.mnu div button:hover{background:var(--card2)}
+.more{width:100%;margin-top:8px}.eh{margin:28px 4px 12px}
+.eg{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.ent{padding:16px}.et{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.ef{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--mut);margin-bottom:10px}
+.pill{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--card2);color:var(--mut)}
+.pill.pv{background:var(--card2);background:color-mix(in srgb,var(--amb) 18%,transparent);color:var(--amb)}
+.pill.ov{background:var(--card2);background:color-mix(in srgb,var(--red) 16%,transparent);color:var(--red)}
 </style>
 </head>
 <body>
@@ -240,7 +262,7 @@ function render(){
   const pend=items.filter(i=>!i.hecho),now=new Date(),ym=iso(now).slice(0,7);
   const mesDe=l=>({por:l.filter(i=>!i.hecho&&i.monto&&i.fecha.startsWith(ym)).reduce((t,i)=>t+Number(i.monto),0),ok:l.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)).length});
   if(view){const a=areas.find(x=>x.id===view),l=sort(pend.filter(i=>i.area_id===view)),s=mesDe(items.filter(i=>i.area_id===view));
-    $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Trabajo</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><div class="hd"><h1>${a.icono} ${esc(a.nombre)}</h1><span class="sub">${l.length} pendientes · ${s.ok} cumplidas este mes</span></div><div class="tgrid">${l.map(row).join('')||'<div class="card empty">Nada pendiente aquí.</div>'}</div>`;return}
+    $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Trabajo</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><div class="hd"><h1>${a.icono} ${esc(a.nombre)}</h1><span class="sub">${l.length} pendientes · ${s.ok} cumplidas este mes</span></div><div class="card lst">${l.map(lrow).join('')||'<div class="empty">Nada pendiente aquí.</div>'}</div>`;return}
   const s=mesDe(items),srt=sort(pend),top=srt.slice(0,4),rest=srt.slice(4,12);
   const pm=pend.filter(i=>i.fecha.startsWith(ym)).length,pct=s.ok+pm?Math.round(100*s.ok/(s.ok+pm)):0;
   const hs_=items.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)),pe_=pend.filter(i=>i.fecha<=ym+'-31').length,ot_=hs_.filter(i=>iso(new Date(i.hecho_en))<=i.fecha).length,tt_=hs_.length+pe_;
@@ -251,13 +273,33 @@ const pagos=pend.filter(i=>i.monto&&days(i.fecha)>=0).sort((x,y)=>x.fecha.locale
   <div class="cap-lbl">✨ Escribe o dicta y la IA lo ordena</div><div class="card capbar"><input id="cap" placeholder="Escribe o dicta: reunión con gerencia el jueves 10am" onkeydown="if(event.key==='Enter')capture()"><button class="btn ic" onclick="dictar()" title="Dictar">🎤</button><button class="btn p ic" onclick="capture()" title="Entender con IA">✨</button></div><div id="cap-msg" style="font-size:12px;color:var(--mut);min-height:16px;margin-bottom:0"></div>
   <div class="strip">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><div><b>${esc(a.nombre)}</b><small>${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div></div>`).join('')}</div>
   <div class="dash"><div class="mainc"><div id="choques">${choquesHtml()}</div>
-    <h3>Qué hacer primero</h3><div class="tgrid">${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}</div>
-    ${rest.length?`<h3>Más adelante</h3><div class="mini">${rest.map(mini).join('')}</div>`:''}</div>
+    ${bloqueTrabajo(pend)}</div>
   <aside class="side">
     <div class="card"><h3>📊 Resumen de ${rs.mes}</h3><div class="res"><div><b>${rs.ok}</b><small>tareas completadas</small><div class="rb"><i style="width:${rs.pOk}%;background:var(--ok,#10b981)"></i></div></div><div><b>${rs.pen}</b><small>pendientes</small><div class="rb"><i style="width:${rs.pPen}%;background:var(--ac)"></i></div></div><div><b>${rs.at===null?'—':rs.at+'%'}</b><small>a tiempo</small><div class="rb"><i style="width:${rs.at||0}%;background:var(--ok,#10b981)"></i></div></div></div></div>
     <div class="card"><h3>Calendario</h3>${calHtml(pend)}</div>
     ${pagos.length?`<div class="card"><h3>Próximos pagos</h3>${pagos.map(i=>`<div class="pay"><span><b>${esc(i.titulo)}</b><small>${fdate(i.fecha)}</small></span><span>S/ ${Number(i.monto).toFixed(2)}</span></div>`).join('')}</div>`:''}
   </aside></div>`;refreshChoques()}
+let tab='todo',showAll=false;
+function setTab(t){tab=t;showAll=false;render()}
+function verTodo(){showAll=true;render()}
+const IC={'reunión':'👥',entrega:'📦',tarea:'✅',pago:'💳',otro:'📌'};
+function lrow(i){const a=areas.find(x=>x.id===i.area_id)||{},d=days(i.fecha),h=i.hora?String(i.hora).slice(0,5):'';
+const pr=i.importancia===3?'<span class="pri hi">❗ Alta</span>':'<span class="pri">'+(i.importancia===2?'Normal':'Baja')+'</span>';
+const cw=d<0?'Vencido hace '+(-d)+(d==-1?' día':' días'):d==0?'Hoy':d==1?'Mañana':fdate(i.fecha);
+return `<div class="lr"><button class="chk" title="Marcar como hecha" onclick="done(${i.id})">✓</button><span class="li" style="--c:${a.color||'#6366f1'}">${IC[i.categoria]||'📌'}</span><div class="lt"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')}${i.repite&&i.repite!=='no'?' · ↻ '+i.repite:''}</small></div>${pr}<span class="lw${d<0?' ov':''}">🕒 ${cw}${h?' · '+h:''}</span><details class="mnu"><summary title="Más opciones">⋯</summary><div><button onclick="edit(${i.id})">✏️ Editar</button><button onclick="del(${i.id})">🗑 Eliminar</button></div></details></div>`}
+function ent(i){const a=areas.find(x=>x.id===i.area_id)||{},d=days(i.fecha);
+const st=d<0?['Vencido','ov']:d<=1?['Por vencer','pv']:['Pendiente',''];
+const t0=new Date(i.creado_en).getTime(),t1=new Date(i.fecha+'T23:59:00').getTime(),p=t1>t0?Math.max(0,Math.min(100,Math.round(100*(Date.now()-t0)/(t1-t0)))):100;
+return `<div class="card ent"><div class="et"><span class="li" style="--c:${a.color||'#6366f1'}">📦</span><div class="lt"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')}</small></div></div><div class="ef"><span>📅 ${d==0?'Hoy':d==1?'Mañana':d<0?'Venció '+fdate(i.fecha):fdate(i.fecha)}${i.hora?' · '+String(i.hora).slice(0,5):''}</span><span class="pill ${st[1]}">${st[0]}</span></div><div class="rb" title="Plazo transcurrido"><i style="width:${p}%;background:var(--ac)"></i></div></div>`}
+function bloqueTrabajo(pend){
+const all=sort(pend),f=tab==='hoy'?all.filter(i=>days(i.fecha)<=0):tab==='alta'?all.filter(i=>i.importancia===3):all;
+const lim=showAll?f.length:8,vis=f.slice(0,lim);
+const tabs=[['todo','Todo'],['hoy','Hoy'],['alta','Alta']].map(t=>`<button class="${tab===t[0]?'on':''}" onclick="setTab('${t[0]}')">${t[1]}</button>`).join('');
+const vacio={todo:'Sin pendientes. ¡Todo al día!',hoy:'Nada para hoy ni vencido.',alta:'No tienes nada de importancia alta.'}[tab];
+let h=`<div class="card lst"><div class="lh"><b>✅ Tu trabajo</b><div class="tabs">${tabs}</div></div>${vis.map(lrow).join('')||'<div class="empty">'+vacio+'</div>'}${f.length>lim?`<button class="btn more" onclick="verTodo()">Ver los ${f.length}</button>`:''}</div>`;
+const en=pend.filter(i=>i.categoria==='entrega').sort((x,y)=>x.fecha.localeCompare(y.fecha)).slice(0,4);
+h+=`<div class="eh"><b>🚩 Próximos entregables</b></div>`+(en.length?`<div class="eg">${en.map(ent).join('')}</div>`:'<div class="card empty">Sin entregas. Crea una actividad con categoría «entrega».</div>');
+return h}
 let editId=null;
 function edit(id){const it=items.find(x=>x.id===id);if(it)openForm(null,it)}
 function openForm(aid,it){editId=it&&it.id?it.id:null;const v=it||{};const d=$('#dlg');
