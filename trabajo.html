@@ -165,6 +165,10 @@ dialog .top{margin-bottom:6px}
 .mrow input,.mrow select{width:100%}
 .mh input[type=checkbox]{width:auto}
 .mlist{max-height:58vh;overflow:auto;margin-top:10px}
+.res{display:grid;grid-template-columns:repeat(3,1fr)}
+.res>div{padding:0 14px;border-left:1px solid var(--bd)}.res>div:first-child{padding-left:0;border:0}
+.res b{display:block;font:700 30px/1.1 var(--f-head)}.res small{display:block;color:var(--mut);font-size:12px;margin:2px 0 10px}
+.rb{height:6px;border-radius:99px;background:var(--card2);overflow:hidden}.rb i{display:block;height:100%;border-radius:99px}
 </style>
 </head>
 <body>
@@ -236,10 +240,12 @@ function render(){
   const pend=items.filter(i=>!i.hecho),now=new Date(),ym=iso(now).slice(0,7);
   const mesDe=l=>({por:l.filter(i=>!i.hecho&&i.monto&&i.fecha.startsWith(ym)).reduce((t,i)=>t+Number(i.monto),0),ok:l.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)).length});
   if(view){const a=areas.find(x=>x.id===view),l=sort(pend.filter(i=>i.area_id===view)),s=mesDe(items.filter(i=>i.area_id===view));
-    $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Trabajo</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><div class="hd"><h1>${a.icono} ${esc(a.nombre)}</h1><span class="sub">${l.length} pendientes · S/ ${s.por.toFixed(2)} por pagar este mes · ${s.ok} cumplidas</span></div><div class="tgrid">${l.map(row).join('')||'<div class="card empty">Nada pendiente aquí.</div>'}</div>`;return}
+    $('#app').innerHTML=`<div class="top"><button class="btn" onclick="view=null;render()">← Trabajo</button><button class="btn p" onclick="openForm(${view})">+ Nueva</button></div><div class="hd"><h1>${a.icono} ${esc(a.nombre)}</h1><span class="sub">${l.length} pendientes · ${s.ok} cumplidas este mes</span></div><div class="tgrid">${l.map(row).join('')||'<div class="card empty">Nada pendiente aquí.</div>'}</div>`;return}
   const s=mesDe(items),srt=sort(pend),top=srt.slice(0,4),rest=srt.slice(4,12);
   const pm=pend.filter(i=>i.fecha.startsWith(ym)).length,pct=s.ok+pm?Math.round(100*s.ok/(s.ok+pm)):0;
-  const pagos=pend.filter(i=>i.monto&&days(i.fecha)>=0).sort((x,y)=>x.fecha.localeCompare(y.fecha)).slice(0,4);
+  const hs_=items.filter(i=>i.hecho&&i.hecho_en&&i.hecho_en.startsWith(ym)),pe_=pend.filter(i=>i.fecha<=ym+'-31').length,ot_=hs_.filter(i=>iso(new Date(i.hecho_en))<=i.fecha).length,tt_=hs_.length+pe_;
+const rs={mes:now.toLocaleDateString('es',{month:'long'}),ok:hs_.length,pen:pe_,at:hs_.length?Math.round(100*ot_/hs_.length):null,pOk:tt_?Math.round(100*hs_.length/tt_):0,pPen:tt_?Math.round(100*pe_/tt_):0};
+const pagos=pend.filter(i=>i.monto&&days(i.fecha)>=0).sort((x,y)=>x.fecha.localeCompare(y.fecha)).slice(0,4);
   $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><span><button class="btn" onclick="planOpen()">📅 Plan de hoy</button> <button class="btn" onclick="planSemOpen()">🗓 Plan semanal</button> <button class="btn p" onclick="openForm()">+ Nueva</button></span></div>
   <div class="hd"><h1>Trabajo</h1><span class="sub">${fdate(iso(now))} · ${pend.length} pendientes</span></div>
   <div class="cap-lbl">✨ Escribe o dicta y la IA lo ordena</div><div class="card capbar"><input id="cap" placeholder="Escribe o dicta: reunión con gerencia el jueves 10am" onkeydown="if(event.key==='Enter')capture()"><button class="btn ic" onclick="dictar()" title="Dictar">🎤</button><button class="btn p ic" onclick="capture()" title="Entender con IA">✨</button></div><div id="cap-msg" style="font-size:12px;color:var(--mut);min-height:16px;margin-bottom:0"></div>
@@ -248,7 +254,7 @@ function render(){
     <h3>Qué hacer primero</h3><div class="tgrid">${top.map(row).join('')||'<div class="card empty">Sin pendientes. ¡Todo al día!</div>'}</div>
     ${rest.length?`<h3>Más adelante</h3><div class="mini">${rest.map(mini).join('')}</div>`:''}</div>
   <aside class="side">
-    <div class="card"><h3>Resumen de ${MN[now.getMonth()]}</h3><div class="sum"><div><b>S/ ${s.por.toFixed(2)}</b><small>por pagar este mes</small></div><div><b>${s.ok}</b><small>actividades cumplidas</small></div></div><div class="bar"><i style="width:${pct}%"></i></div><span class="nota">${s.ok} de ${s.ok+pm} del mes (${pct}%)</span></div>
+    <div class="card"><h3>📊 Resumen de ${rs.mes}</h3><div class="res"><div><b>${rs.ok}</b><small>tareas completadas</small><div class="rb"><i style="width:${rs.pOk}%;background:var(--ok,#10b981)"></i></div></div><div><b>${rs.pen}</b><small>pendientes</small><div class="rb"><i style="width:${rs.pPen}%;background:var(--ac)"></i></div></div><div><b>${rs.at===null?'—':rs.at+'%'}</b><small>a tiempo</small><div class="rb"><i style="width:${rs.at||0}%;background:var(--ok,#10b981)"></i></div></div></div></div>
     <div class="card"><h3>Calendario</h3>${calHtml(pend)}</div>
     ${pagos.length?`<div class="card"><h3>Próximos pagos</h3>${pagos.map(i=>`<div class="pay"><span><b>${esc(i.titulo)}</b><small>${fdate(i.fecha)}</small></span><span>S/ ${Number(i.monto).toFixed(2)}</span></div>`).join('')}</div>`:''}
   </aside></div>`;refreshChoques()}
