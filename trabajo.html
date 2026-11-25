@@ -488,21 +488,29 @@ async function planGo(){const desde=$('#pl-d').value,hasta=$('#pl-h').value,out=
 /* ===== plan semanal: próximos 7 días, sin IA ===== */
 function hm(h){if(!h)return 9999;const m=String(h).match(/(\d{1,2}):(\d\d)(?::\d\d)?\s*(AM|PM)?/i);if(!m)return 9999;let H=+m[1];if(m[3])H=H%12+(m[3].toUpperCase()==='PM'?12:0);return H*60+ +m[2]}
 function hs(h){const v=hm(h);return v===9999?null:pad(Math.floor(v/60))+':'+pad(v%60)}
-function semItem(i){const h=hs(i.hora);return `<div class="card row"><div class="chip c2" style="min-width:84px">${h?`<span class="h" style="font-size:15px">${h}</span>`:`<span class="h s">Todo el día</span>`}</div><div class="t"><b>${i.tipo==='estudio'?'📚':'💼'} ${esc(i.titulo)}</b><small>${esc(i.area||'')}${i.monto?' · S/ '+Number(i.monto).toFixed(2):''}</small></div></div>`}
+function semItem(i,mot){const h=hs(i.hora);return `<div class="card row"><div class="chip c2" style="min-width:84px">${h?`<span class="h" style="font-size:15px">${h}</span>`:`<span class="h s">Todo el día</span>`}</div><div class="t"><b>${i.tipo==='estudio'?'📚':'💼'} ${esc(i.titulo)}</b><small>${esc(i.area||'')}${i.monto?' · S/ '+Number(i.monto).toFixed(2):''}${mot?'<br>💡 '+esc(mot):''}</small></div></div>`}
 async function planSemOpen(){
-const d=$('#dlg');d.innerHTML='<div class="top"><b>🗓 Plan semanal</b><button class="x" onclick="$(\'#dlg\').close()">✕</button></div><div id="sem-out" class="mlist"><div class="empty">Armando tu semana…</div></div>';d.showModal();
+const d=$('#dlg');d.innerHTML='<div class="top"><b>🗓 Plan semanal</b><button class="x" onclick="$(\'#dlg\').close()">✕</button></div><div id="sem-out" class="mlist"><div class="empty">Pensando tu semana… puede tardar unos segundos.</div></div>';d.showModal();
 let l;try{l=await planData()}catch(e){$('#sem-out').innerHTML='<div class="empty">No se pudieron leer tus pendientes.</div>';return}
-const n=new Date(),dias=[...Array(7)].map((_,i)=>iso(new Date(n.getFullYear(),n.getMonth(),n.getDate()+i)));
+if(!l.length){$('#sem-out').innerHTML='<div class="empty">No tienes pendientes. ¡Semana libre!</div>';return}
+const n=new Date(),hoy=iso(n),dias=[...Array(7)].map((_,i)=>iso(new Date(n.getFullYear(),n.getMonth(),n.getDate()+i)));
 const ord=(a,b)=>hm(a.hora)-hm(b.hora)||b.importancia-a.importancia;
-const venc=l.filter(i=>i.dias_restantes<0).sort(ord),mas=l.filter(i=>i.dias_restantes>6).length;
-let h='';
-if(venc.length)h+=`<h3>⚠ Vencidos (${venc.length})</h3>`+venc.map(semItem).join('');
-let max=0,maxd='';
-dias.forEach((f,i)=>{const L=l.filter(x=>x.fecha===f).sort(ord);if(L.length>max){max=L.length;maxd=i}
-h+=`<h3>${i===0?'Hoy':i===1?'Mañana':fdate(f)} · ${L.length?L.length+(L.length===1?' actividad':' actividades'):'libre'}${L.length>=4?' · día cargado':''}</h3>`+(L.length?L.map(semItem).join(''):'<div class="card empty">Nada programado.</div>')});
-if(!l.length)h='<div class="empty">No tienes pendientes esta semana. ¡Semana libre!</div>';
-else{if(max>=3)h+=`<div class="card" style="margin-top:8px">💡 Tu día más cargado es ${maxd===0?'hoy':maxd===1?'mañana':fdate(dias[maxd])} (${max} actividades). Si puedes, adelanta algo.</div>`;
-if(mas)h+=`<div style="font-size:12px;color:var(--mut);margin-top:8px">Además hay ${mas} pendiente${mas>1?'s':''} para después de esta semana.</div>`}
+let ai=null,via='';
+try{const r=await fetch(URL_+'/functions/v1/lifeos-semana',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify({hoy,dia:WD[n.getDay()],items:sort(l.map(i=>({...i,fecha:i.fecha,hecho:false}))).slice(0,40).map(i=>({ref:i.ref,titulo:i.titulo,tipo:i.tipo,categoria:i.categoria,fecha:i.fecha,hora:i.hora,vence_en_dias:i.dias_restantes,importancia:i.importancia,esfuerzo:i.esfuerzo,area:i.area}))})});
+const j=await r.json();if(j.error)throw new Error(j.error);ai=j.resultado;via=(j.proveedor?j.proveedor+' / ':'')+(j.modelo||'')}catch(e){console.warn('[LifeOS] plan semanal IA falló:',e.message);ai=null}
+const by={},asig={},mot={},enf={};l.forEach(i=>by[i.ref]=i);
+if(ai&&Array.isArray(ai.dias))ai.dias.forEach(x=>{if(!dias.includes(x.fecha))return;enf[x.fecha]=String(x.enfoque||'').slice(0,80);(x.items||[]).forEach(y=>{const it=by[y.ref];if(it&&!asig[y.ref]&&!(it.fecha>=hoy&&it.fecha<x.fecha)){asig[y.ref]=x.fecha;mot[y.ref]=String(y.motivo||'').slice(0,140)}})});
+const okAI=Object.keys(asig).length>0,desp=new Set(ai&&Array.isArray(ai.despues)?ai.despues:[]);
+l.forEach(i=>{if(asig[i.ref])return;if(okAI&&desp.has(i.ref)&&i.dias_restantes>6)return;if(i.dias_restantes<=6){asig[i.ref]=i.dias_restantes<0?hoy:i.fecha}});
+l.forEach(i=>{if(i.dias_restantes<0&&!mot[i.ref])mot[i.ref]='Está vencido: va primero.'});
+let h='',max=0,maxd=0;
+dias.forEach((f,i)=>{const L=l.filter(x=>asig[x.ref]===f).sort(ord);if(L.length>max){max=L.length;maxd=i}
+h+=`<h3>${i===0?'Hoy':i===1?'Mañana':fdate(f)} · ${enf[f]?esc(enf[f]):(L.length?L.length+(L.length===1?' actividad':' actividades'):'libre')}</h3>`+(L.length?L.map(x=>semItem(x,mot[x.ref])).join(''):'<div class="card empty">Nada programado.</div>')});
+const resto=l.filter(i=>!asig[i.ref]).length;
+const cons=okAI&&ai.consejo?String(ai.consejo):(max>=3?`Tu día más cargado es ${maxd===0?'hoy':maxd===1?'mañana':fdate(dias[maxd])} (${max} actividades). Si puedes, adelanta algo.`:'');
+if(cons)h+=`<div class="card" style="margin-top:8px">💡 ${esc(cons)}</div>`;
+if(resto)h+=`<div style="font-size:12px;color:var(--mut);margin-top:8px">Además hay ${resto} pendiente${resto>1?'s':''} para después de esta semana.</div>`;
+h+=`<div style="font-size:11px;color:var(--mut);margin-top:6px">${okAI?'Generado con '+esc(via):'Modo básico (la IA no respondió): ordenado por fecha, sin motivos.'}</div>`;
 $('#sem-out').innerHTML=h}
 
 (async()=>{if(!user||!user.username){render();return}$('#app').innerHTML='<div class="empty">Cargando…</div>';try{await load();render()}catch(e){$('#app').innerHTML='<div class="card empty">No se pudo conectar con la base de datos.</div>'}})();
