@@ -279,9 +279,10 @@ const pagos=pend.filter(i=>i.monto&&days(i.fecha)>=0).sort((x,y)=>x.fecha.locale
     <div class="card"><h3>Calendario</h3>${calHtml(pend)}</div>
     ${pagos.length?`<div class="card"><h3>Próximos pagos</h3>${pagos.map(i=>`<div class="pay"><span><b>${esc(i.titulo)}</b><small>${fdate(i.fecha)}</small></span><span>S/ ${Number(i.monto).toFixed(2)}</span></div>`).join('')}</div>`:''}
   </aside></div>`;refreshChoques()}
-let tab='todo',showAll=false;
+let tab='todo',showAll=false,showEnt=false;
 function setTab(t){tab=t;showAll=false;render()}
 function verTodo(){showAll=true;render()}
+function verEnt(){showEnt=true;render()}
 const IC={'reunión':'👥',entrega:'📦',tarea:'✅',pago:'💳',otro:'📌'};
 function lrow(i){const a=areas.find(x=>x.id===i.area_id)||{},d=days(i.fecha),h=i.hora?String(i.hora).slice(0,5):'';
 const pr=i.importancia===3?'<span class="pri hi">❗ Alta</span>':'<span class="pri">'+(i.importancia===2?'Normal':'Baja')+'</span>';
@@ -290,15 +291,15 @@ return `<div class="lr"><button class="chk" title="Marcar como hecha" onclick="d
 function ent(i){const a=areas.find(x=>x.id===i.area_id)||{},d=days(i.fecha);
 const st=d<0?['Vencido','ov']:d<=1?['Por vencer','pv']:['Pendiente',''];
 const t0=new Date(i.creado_en).getTime(),t1=new Date(i.fecha+'T23:59:00').getTime(),p=t1>t0?Math.max(0,Math.min(100,Math.round(100*(Date.now()-t0)/(t1-t0)))):100;
-return `<div class="card ent"><div class="et"><span class="li" style="--c:${a.color||'#6366f1'}">📦</span><div class="lt"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')}</small></div></div><div class="ef"><span>📅 ${d==0?'Hoy':d==1?'Mañana':d<0?'Venció '+fdate(i.fecha):fdate(i.fecha)}${i.hora?' · '+String(i.hora).slice(0,5):''}</span><span class="pill ${st[1]}">${st[0]}</span></div><div class="rb" title="Plazo transcurrido"><i style="width:${p}%;background:var(--ac)"></i></div></div>`}
+return `<div class="card ent"><div class="et"><span class="li" style="--c:${a.color||'#6366f1'}">${IC[i.categoria]||'📌'}</span><div class="lt"><b>${esc(i.titulo)}</b><small>${a.icono||''} ${esc(a.nombre||'')} · ${esc(i.categoria||'otro')}</small></div></div><div class="ef"><span>📅 ${d==0?'Hoy':d==1?'Mañana':d<0?'Venció '+fdate(i.fecha):fdate(i.fecha)}${i.hora?' · '+String(i.hora).slice(0,5):''}</span><span class="pill ${st[1]}">${st[0]}</span></div><div class="rb" title="Plazo transcurrido"><i style="width:${p}%;background:var(--ac)"></i></div></div>`}
 function bloqueTrabajo(pend){
-const all=sort(pend),f=tab==='hoy'?all.filter(i=>days(i.fecha)<=0):tab==='alta'?all.filter(i=>i.importancia===3):all;
+const all=sort(pend),hoy=all.filter(i=>days(i.fecha)<=0),f=tab==='alta'?hoy.filter(i=>i.importancia===3):hoy;
 const lim=showAll?f.length:8,vis=f.slice(0,lim);
-const tabs=[['todo','Todo'],['hoy','Hoy'],['alta','Alta']].map(t=>`<button class="${tab===t[0]?'on':''}" onclick="setTab('${t[0]}')">${t[1]}</button>`).join('');
-const vacio={todo:'Sin pendientes. ¡Todo al día!',hoy:'Nada para hoy ni vencido.',alta:'No tienes nada de importancia alta.'}[tab];
-let h=`<div class="card lst"><div class="lh"><b>✅ Tu trabajo</b><div class="tabs">${tabs}</div></div>${vis.map(lrow).join('')||'<div class="empty">'+vacio+'</div>'}${f.length>lim?`<button class="btn more" onclick="verTodo()">Ver los ${f.length}</button>`:''}</div>`;
-const en=pend.filter(i=>i.categoria==='entrega').sort((x,y)=>x.fecha.localeCompare(y.fecha)).slice(0,4);
-h+=`<div class="eh"><b>🚩 Próximos entregables</b></div>`+(en.length?`<div class="eg">${en.map(ent).join('')}</div>`:'<div class="card empty">Sin entregas. Crea una actividad con categoría «entrega».</div>');
+const tabs=[['todo','Todo'],['alta','Alta']].map(t=>`<button class="${tab===t[0]?'on':''}" onclick="setTab('${t[0]}')">${t[1]}</button>`).join('');
+const vacio=tab==='alta'?'Nada de importancia alta para hoy.':'Nada para hoy. ¡Todo al día!';
+let h=`<div class="card lst"><div class="lh"><b>✅ Tu trabajo de hoy</b><div class="tabs">${tabs}</div></div>${vis.map(lrow).join('')||'<div class="empty">'+vacio+'</div>'}${f.length>lim?`<button class="btn more" onclick="verTodo()">Ver los ${f.length}</button>`:''}</div>`;
+const en=all.filter(i=>days(i.fecha)>0).sort((x,y)=>x.fecha.localeCompare(y.fecha)||String(x.hora||'').localeCompare(String(y.hora||''))),lim2=showEnt?en.length:6;
+h+=`<div class="eh"><b>🚩 Próximos entregables</b></div>`+(en.length?`<div class="eg">${en.slice(0,lim2).map(ent).join('')}</div>${en.length>lim2?`<button class="btn more" onclick="verEnt()">Ver todos (${en.length})</button>`:''}`:'<div class="card empty">Sin pendientes próximos. ¡Todo al día!</div>');
 return h}
 let editId=null;
 function edit(id){const it=items.find(x=>x.id===id);if(it)openForm(null,it)}
