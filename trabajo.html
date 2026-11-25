@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LifeOS | Trabajo</title>
+<style>
+:root{--ink:#171746;--mut:#60618e;--pu:#7045f5;--pu2:#9274ff;--bd:#e5e4fb;--bg:#f8f8ff;--card:#fff;--soft:#f1edff;--red:#f04e61;--grn:#16b978;--org:#ff922e;--blu:#2878f5;--sh:0 5px 18px rgba(70,55,145,.07)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#f4f2ff;--mut:#a5a6cc;--bd:#414166;--bg:#17172d;--card:#252542;--soft:#2f2f55}}
+:root[data-theme="dark"]{--ink:#f4f2ff;--mut:#a5a6cc;--bd:#414166;--bg:#17172d;--card:#252542;--soft:#2f2f55}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,Segoe UI,Arial,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit;cursor:pointer;color:inherit}
+:focus-visible{outline:2px solid var(--pu);outline-offset:2px}
+.app{max-width:1360px;margin:auto;padding:18px 22px}
+.top{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.search{flex:1;max-width:560px;height:44px;border:1px solid var(--bd);border-radius:28px;background:var(--card);padding:0 18px;box-shadow:var(--sh)}
+.search input{width:100%;height:100%;border:0;outline:0;background:none;color:var(--ink);font-size:14px}
+.btn-i{height:42px;border:1px solid var(--bd);background:var(--card);border-radius:24px;padding:0 15px}
+.top .r{margin-left:auto;display:flex;gap:10px;align-items:center}
+.layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:22px}
+.side{border-right:1px solid var(--bd);padding-right:14px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:36px}
+.mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#5e39ed,#9875ff);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:800}
+.brand b{font-size:22px;letter-spacing:-.8px}
+.nav{display:grid;gap:8px}
+.nav a{text-decoration:none;color:var(--ink);padding:12px 14px;border-radius:13px;font-size:14px;font-weight:600}
+.nav a.on{color:#fff;background:linear-gradient(100deg,#6038ed,#9470ff)}
+.head{display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.hi{width:64px;height:64px;border-radius:17px;background:linear-gradient(145deg,#6843f4,#9b7cff);color:#fff;display:grid;place-items:center;font-size:30px}
+.head h1{margin:0 0 4px;font-size:28px;letter-spacing:-.7px}.head p{margin:0;color:var(--mut);font-size:14px}
+.date{margin-left:auto;background:var(--card);border:1px solid var(--bd);border-radius:24px;padding:11px 15px;font-size:13px;font-weight:650}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat{border:1px solid var(--bd);border-radius:17px;background:var(--card);box-shadow:var(--sh);padding:14px 16px;border-left:5px solid var(--c)}
+.stat b{display:block;font-size:26px}.stat span{font-size:12px;color:var(--mut);font-weight:600}
+.grid{display:grid;grid-template-columns:1.25fr .9fr;gap:18px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;box-shadow:var(--sh);overflow:hidden}
+.ch{display:flex;justify-content:space-between;align-items:center;padding:15px 18px;border-bottom:1px solid var(--bd)}
+.ch h2{margin:0;font-size:17px}
+.prio{background:linear-gradient(120deg,#7045f5,#8d6cff);padding:14px;border-radius:18px;color:#fff}
+.prio h2{margin:0 2px 12px;font-size:18px}
+.pin{background:var(--card);color:var(--ink);border-radius:14px;padding:18px}
+.pin h3{margin:0 0 8px;font-size:18px}
+.pin p{font-size:13px;line-height:1.5;color:var(--mut);margin:10px 0}
+.tag{display:inline-block;border-radius:14px;padding:4px 10px;font-size:12px;font-weight:700;background:#ffe6e9;color:#d52f46}
+.tag.m{background:#fff0e2;color:#c9600c}.tag.b{background:#e5efff;color:#1d5fc4}
+.pb{border:0;border-radius:20px;background:var(--pu);color:#fff;padding:9px 16px;font-size:12px;font-weight:700}
+.row{display:flex;gap:12px;padding:12px 18px;border-bottom:1px solid var(--bd);align-items:flex-start}
+.row:last-child{border:0}
+.row .t{flex:1;min-width:0}.row strong{font-size:14px}.row p{margin:3px 0 0;font-size:12px;color:var(--mut)}
+.row.done strong{text-decoration:line-through;color:var(--mut)}
+.chk{width:20px;height:20px;margin-top:2px;accent-color:var(--pu)}
+.x{border:0;background:none;color:var(--mut);font-size:16px;padding:0 4px}
+.prog{height:7px;border-radius:5px;background:var(--soft);margin-top:8px;overflow:hidden}.prog i{display:block;height:100%;background:linear-gradient(90deg,#6038ed,#9470ff)}
+.empty{padding:22px 18px;color:var(--mut);font-size:13px}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px}
+.quick button{border:1px solid var(--bd);background:var(--bg);border-radius:14px;padding:16px 8px;font-weight:700;font-size:13px}
+.quick button:hover{border-color:var(--pu)}
+dialog{border:1px solid var(--bd);border-radius:18px;background:var(--card);color:var(--ink);width:min(420px,92vw);padding:20px}
+dialog::backdrop{background:#0008}
+dialog h3{margin:0 0 12px}
+label{display:block;font-size:12px;font-weight:650;color:var(--mut);margin:8px 0 3px}
+dialog input,dialog select,dialog textarea{width:100%;padding:9px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.acts{display:flex;gap:8px;margin-top:14px}.acts button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);font-weight:650}
+.acts .ok{background:var(--pu);border-color:var(--pu);color:#fff}
+.err{color:var(--red);font-size:13px;min-height:16px}
+.gate{max-width:420px;margin:12vh auto;text-align:center;padding:26px}.gate a{color:var(--pu);font-weight:700}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.app{padding:12px}.layout{display:block}.side{border:0;padding:0}.brand{margin-bottom:10px}.nav{display:flex;overflow:auto;margin-bottom:16px}.nav a{white-space:nowrap}.date{margin:0;width:100%;text-align:center}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <div class="search"><input id="q" placeholder="Buscar tareas, reuniones o proyectos" aria-label="Buscar"></div>
+    <div class="r"><button class="btn-i" id="th" title="Cambiar tema">☾</button><span id="who" style="font-weight:650;font-size:14px"></span></div>
+  </header>
+  <div class="layout">
+    <aside class="side">
+      <div class="brand"><div class="mark">✓</div><b>LifeOS</b></div>
+      <nav class="nav"><a href="index.html">Resumen</a><a href="estudio">Estudio</a><a class="on" href="trabajo">Trabajo</a><a href="personal">Vida personal</a></nav>
+    </aside>
+    <main>
+      <section class="head"><div class="hi">▣</div><div><h1>Trabajo</h1><p>Tus tareas, reuniones y proyectos en un solo lugar.</p></div><div class="date" id="date"></div></section>
+      <section class="stats" id="stats"></section>
+      <section class="grid">
+        <div class="prio"><h2>¿Qué hago primero?</h2><div class="pin" id="first"></div></div>
+        <div class="card"><div class="ch"><h2>Próximas reuniones</h2></div><div id="meets"></div></div>
+      </section>
+      <section class="grid">
+        <div class="card"><div class="ch"><h2>Mis tareas</h2></div><div id="tasks"></div></div>
+        <div style="display:grid;gap:18px;align-content:start">
+          <div class="card"><div class="ch"><h2>Mis proyectos</h2></div><div id="projs"></div></div>
+          <div class="card"><div class="ch"><h2>Acciones rápidas</h2></div>
+            <div class="quick"><button onclick="openF('tarea')">+ Nueva tarea</button><button onclick="openF('reunion')">+ Nueva reunión</button><button onclick="openF('proyecto')">+ Nuevo proyecto</button></div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <h3 id="dt">Nueva tarea</h3>
+  <label>Título</label><input id="f-t" maxlength="120">
+  <div id="f-desc"><label>Descripción</label><textarea id="f-d" rows="2"></textarea></div>
+  <div class="two" id="f-when"><div><label>Fecha</label><input type="date" id="f-f"></div><div><label>Hora</label><input type="time" id="f-h"></div></div>
+  <div class="two"><div id="f-pr"><label>Prioridad</label><select id="f-p"><option value="3">Alta</option><option value="2" selected>Media</option><option value="1">Baja</option></select></div>
+    <div id="f-pj"><label>Proyecto</label><select id="f-j"></select></div></div>
+  <div id="f-who"><label>Con quién</label><input id="f-w" maxlength="80"></div>
+  <div class="err" id="err"></div>
+  <div class="acts"><button onclick="dlg.close()">Cancelar</button><button class="ok" onclick="saveF()">Guardar</button></div>
+</dialog>
+
+<script>
+try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}
+const SB='https://ebtehnbffwobpdnmftod.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVidGVobmJmZndvYnBkbm1mdG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODM1NzQsImV4cCI6MjA5NTA1OTU3NH0.hzkHQ88Q_GJjH9BZJXkXOj2M3NLP8Sms-QId0jt2N3Y';
+const HD={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
+const $=id=>document.getElementById(id),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let U=null;try{U=JSON.parse(localStorage.getItem('personal_user'))}catch(e){}
+let P=[],I=[],kind='tarea';
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const today=iso(new Date());
+const fmt=(f,h)=>{const d=new Date(f+'T00:00:00'),n=Math.round((d-new Date(today+'T00:00:00'))/864e5);
+  const l=n===0?'Hoy':n===1?'Mañana':n<0?'Venció el '+d.toLocaleDateString('es',{day:'numeric',month:'short'}):d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'});return l+(h?' · '+h:'')};
+async function api(path,opt){const r=await fetch(SB+'/rest/v1/'+path,Object.assign({headers:HD},opt));if(!r.ok)throw new Error(r.status);return opt&&opt.method&&opt.method!=='GET'&&!(opt.headers&&opt.headers.Prefer)?null:r.json()}
+async function load(){
+  const u=encodeURIComponent(U.username);
+  try{[P,I]=await Promise.all([api('work_projects?username=eq.'+u+'&order=creado_en'),api('work_items?username=eq.'+u+'&order=fecha,hora')]);render()}
+  catch(e){$('first').innerHTML='<p>No se pudo conectar. Revisa tu internet y recarga.</p>'}
+}
+function pct(p){const t=I.filter(i=>i.tipo==='tarea'&&i.project_id===p.id);return t.length?Math.round(t.filter(i=>i.hecho).length*100/t.length):p.progreso}
+function render(){
+  const q=$('q').value.toLowerCase(),m=s=>!q||s.toLowerCase().includes(q);
+  const T=I.filter(i=>i.tipo==='tarea'),pend=T.filter(i=>!i.hecho),tom=iso(new Date(Date.now()+864e5));
+  const soon=pend.filter(i=>i.fecha<=tom).length,act=P.filter(p=>pct(p)<100).length;
+  $('stats').innerHTML=[['Tareas pendientes',pend.length,'var(--blu)'],['Completadas',T.length-pend.length,'var(--grn)'],['Por vencer (hoy y mañana)',soon,'var(--org)'],['Proyectos activos',act,'var(--pu)']].map(s=>'<div class="stat" style="--c:'+s[2]+'"><b>'+s[1]+'</b><span>'+s[0]+'</span></div>').join('');
+  const f=pend.slice().sort((a,b)=>a.fecha.localeCompare(b.fecha)||b.prioridad-a.prioridad)[0];
+  $('first').innerHTML=f?'<h3>'+esc(f.titulo)+'</h3><span class="tag'+(f.prioridad<3?' m':'')+'">'+['','Prioridad baja','Prioridad media','Alta prioridad'][f.prioridad]+'</span> <span class="tag b">'+fmt(f.fecha,f.hora)+'</span><p>'+(f.fecha<=today?'Ya venció o vence hoy, así que va primero.':'Es la tarea con la fecha más cercana.')+'</p><button class="pb" onclick="tog('+f.id+',true)">Marcar como hecha</button>':'<p>No tienes tareas pendientes. Agrega una con “Nueva tarea”.</p>';
+  const ms=I.filter(i=>i.tipo==='reunion'&&i.fecha>=today&&m(i.titulo+i.con_quien));
+  $('meets').innerHTML=ms.length?ms.slice(0,5).map(i=>'<div class="row"><div class="t"><strong>'+esc(i.titulo)+'</strong><p>'+(i.con_quien?'Con '+esc(i.con_quien)+' · ':'')+fmt(i.fecha,i.hora)+'</p></div><button class="x" title="Eliminar" onclick="del(\'work_items\','+i.id+')">✕</button></div>').join(''):'<div class="empty">Sin reuniones próximas.</div>';
+  const ts=T.filter(i=>m(i.titulo+i.descripcion)).sort((a,b)=>a.hecho-b.hecho||a.fecha.localeCompare(b.fecha));
+  $('tasks').innerHTML=ts.length?ts.map(i=>{const pj=P.find(p=>p.id===i.project_id);return '<div class="row'+(i.hecho?' done':'')+'"><input class="chk" type="checkbox" '+(i.hecho?'checked':'')+' onchange="tog('+i.id+',this.checked)" aria-label="Completar"><div class="t"><strong>'+esc(i.titulo)+'</strong><p>'+fmt(i.fecha,i.hora)+(pj?' · '+esc(pj.nombre):'')+(i.descripcion?'<br>'+esc(i.descripcion):'')+'</p></div><button class="x" title="Eliminar" onclick="del(\'work_items\','+i.id+')">✕</button></div>'}).join(''):'<div class="empty">Aún no hay tareas.</div>';
+  const ps=P.filter(p=>m(p.nombre+p.descripcion));
+  $('projs').innerHTML=ps.length?ps.map(p=>{const n=pct(p);return '<div class="row"><div style="font-size:26px">'+esc(p.icono)+'</div><div class="t"><strong>'+esc(p.nombre)+'</strong><p>'+esc(p.descripcion)+'</p><div class="prog"><i style="width:'+n+'%"></i></div><p>'+n+'%</p></div><button class="x" title="Eliminar" onclick="del(\'work_projects\','+p.id+')">✕</button></div>'}).join(''):'<div class="empty">Crea tu primer proyecto.</div>';
+}
+async function tog(id,v){try{await api('work_items?id=eq.'+id,{method:'PATCH',body:JSON.stringify({hecho:v})});I.find(i=>i.id===id).hecho=v;render()}catch(e){alert('No se pudo actualizar')}}
+async function del(tb,id){if(!confirm('¿Eliminar?'))return;try{await api(tb+'?id=eq.'+id,{method:'DELETE'});await load()}catch(e){alert('No se pudo eliminar')}}
+function openF(k){kind=k;const pr=k==='proyecto',mt=k==='reunion';
+  $('dt').textContent={tarea:'Nueva tarea',reunion:'Nueva reunión',proyecto:'Nuevo proyecto'}[k];
+  $('f-when').style.display=$('f-pr').style.display=pr?'none':'';
+  $('f-pj').style.display=k==='tarea'?'':'none';$('f-who').style.display=mt?'':'none';
+  $('f-desc').style.display=mt?'none':'';
+  $('f-j').innerHTML='<option value="">Sin proyecto</option>'+P.map(p=>'<option value="'+p.id+'">'+esc(p.nombre)+'</option>').join('');
+  ['f-t','f-d','f-h','f-w'].forEach(i=>$(i).value='');$('f-f').value=today;$('err').textContent='';$('dlg').showModal()}
+async function saveF(){
+  const t=$('f-t').value.trim();if(!t){$('err').textContent='Escribe un título';return}
+  try{
+    if(kind==='proyecto')await api('work_projects',{method:'POST',body:JSON.stringify({username:U.username,nombre:t,descripcion:$('f-d').value.trim()})});
+    else{if(!$('f-f').value){$('err').textContent='Elige una fecha';return}
+      await api('work_items',{method:'POST',body:JSON.stringify({username:U.username,tipo:kind,titulo:t,descripcion:$('f-d').value.trim(),fecha:$('f-f').value,hora:$('f-h').value||null,prioridad:+$('f-p').value,con_quien:$('f-w').value.trim(),project_id:kind==='tarea'&&$('f-j').value?+$('f-j').value:null})})}
+    $('dlg').close();await load()
+  }catch(e){$('err').textContent='No se pudo guardar. Intenta de nuevo'}
+}
+$('th').onclick=()=>{const d=document.documentElement.getAttribute('data-theme')==='dark'||(!document.documentElement.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme:dark)').matches),n=d?'light':'dark';document.documentElement.setAttribute('data-theme',n);try{localStorage.setItem('theme',n)}catch(e){}};
+$('q').oninput=render;
+$('date').textContent=new Date().toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+if(!U||!U.username){$('app').innerHTML='<div class="gate card"><h2>Inicia sesión</h2><p>Para ver tu área de Trabajo entra con tu cuenta.</p><a href="index.html">Ir a LifeOS</a></div>'}
+else{$('who').textContent=U.displayName||U.username;load()}
+</script>
+</body>
+</html>
