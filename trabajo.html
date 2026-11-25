@@ -240,7 +240,7 @@ function render(){
   const s=mesDe(items),srt=sort(pend),top=srt.slice(0,4),rest=srt.slice(4,12);
   const pm=pend.filter(i=>i.fecha.startsWith(ym)).length,pct=s.ok+pm?Math.round(100*s.ok/(s.ok+pm)):0;
   const pagos=pend.filter(i=>i.monto&&days(i.fecha)>=0).sort((x,y)=>x.fecha.localeCompare(y.fecha)).slice(0,4);
-  $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><span><button class="btn" onclick="planOpen()">📅 Plan de hoy</button> <button class="btn p" onclick="openForm()">+ Nueva</button></span></div>
+  $('#app').innerHTML=`<div class="top"><a class="btn back" href="./">← Volver al menú</a><span><button class="btn" onclick="planOpen()">📅 Plan de hoy</button> <button class="btn" onclick="planSemOpen()">🗓 Plan semanal</button> <button class="btn p" onclick="openForm()">+ Nueva</button></span></div>
   <div class="hd"><h1>Trabajo</h1><span class="sub">${fdate(iso(now))} · ${pend.length} pendientes</span></div>
   <div class="cap-lbl">✨ Escribe o dicta y la IA lo ordena</div><div class="card capbar"><input id="cap" placeholder="Escribe o dicta: reunión con gerencia el jueves 10am" onkeydown="if(event.key==='Enter')capture()"><button class="btn ic" onclick="dictar()" title="Dictar">🎤</button><button class="btn p ic" onclick="capture()" title="Entender con IA">✨</button></div><div id="cap-msg" style="font-size:12px;color:var(--mut);min-height:16px;margin-bottom:0"></div>
   <div class="strip">${areas.map(a=>`<div class="card area" style="--c:${a.color}" onclick="view=${a.id};render()"><div class="i">${a.icono}</div><div><b>${esc(a.nombre)}</b><small>${pend.filter(i=>i.area_id===a.id).length} pendientes</small></div></div>`).join('')}</div>
@@ -484,6 +484,27 @@ async function planGo(){const desde=$('#pl-d').value,hasta=$('#pl-h').value,out=
   out.innerHTML=p.bloques.sort((a,b)=>a.inicio.localeCompare(b.inicio)).map(b=>{const i=by[b.ref];return`<div class="card row"><div class="chip c2" style="min-width:96px"><span class="h" style="font-size:15px">${b.inicio}</span><span class="f">a ${b.fin}</span></div><div class="t"><b>${i.tipo==='estudio'?'📚':'💼'} ${esc(i.titulo)}</b><small>${esc(b.motivo||motivo(i))}</small></div></div>`}).join('')
    +((p.sin_tiempo||[]).filter(r=>by[r]).length?`<h3>No cabe hoy</h3>`+p.sin_tiempo.filter(r=>by[r]).map(r=>`<div class="card row"><div class="t"><b>${esc(by[r].titulo)}</b><small>${motivo(by[r])}</small></div></div>`).join(''):'')
    +(p.consejo?`<div class="card" style="margin-top:8px">💡 ${esc(p.consejo)}</div>`:'')+`<div style="font-size:11px;color:var(--mut);margin-top:6px">Generado con ${via}</div>`}
+
+/* ===== plan semanal: próximos 7 días, sin IA ===== */
+function hm(h){if(!h)return 9999;const m=String(h).match(/(\d{1,2}):(\d\d)(?::\d\d)?\s*(AM|PM)?/i);if(!m)return 9999;let H=+m[1];if(m[3])H=H%12+(m[3].toUpperCase()==='PM'?12:0);return H*60+ +m[2]}
+function hs(h){const v=hm(h);return v===9999?null:pad(Math.floor(v/60))+':'+pad(v%60)}
+function semItem(i){const h=hs(i.hora);return `<div class="card row"><div class="chip c2" style="min-width:84px">${h?`<span class="h" style="font-size:15px">${h}</span>`:`<span class="h s">Todo el día</span>`}</div><div class="t"><b>${i.tipo==='estudio'?'📚':'💼'} ${esc(i.titulo)}</b><small>${esc(i.area||'')}${i.monto?' · S/ '+Number(i.monto).toFixed(2):''}</small></div></div>`}
+async function planSemOpen(){
+const d=$('#dlg');d.innerHTML='<div class="top"><b>🗓 Plan semanal</b><button class="x" onclick="$(\'#dlg\').close()">✕</button></div><div id="sem-out" class="mlist"><div class="empty">Armando tu semana…</div></div>';d.showModal();
+let l;try{l=await planData()}catch(e){$('#sem-out').innerHTML='<div class="empty">No se pudieron leer tus pendientes.</div>';return}
+const n=new Date(),dias=[...Array(7)].map((_,i)=>iso(new Date(n.getFullYear(),n.getMonth(),n.getDate()+i)));
+const ord=(a,b)=>hm(a.hora)-hm(b.hora)||b.importancia-a.importancia;
+const venc=l.filter(i=>i.dias_restantes<0).sort(ord),mas=l.filter(i=>i.dias_restantes>6).length;
+let h='';
+if(venc.length)h+=`<h3>⚠ Vencidos (${venc.length})</h3>`+venc.map(semItem).join('');
+let max=0,maxd='';
+dias.forEach((f,i)=>{const L=l.filter(x=>x.fecha===f).sort(ord);if(L.length>max){max=L.length;maxd=i}
+h+=`<h3>${i===0?'Hoy':i===1?'Mañana':fdate(f)} · ${L.length?L.length+(L.length===1?' actividad':' actividades'):'libre'}${L.length>=4?' · día cargado':''}</h3>`+(L.length?L.map(semItem).join(''):'<div class="card empty">Nada programado.</div>')});
+if(!l.length)h='<div class="empty">No tienes pendientes esta semana. ¡Semana libre!</div>';
+else{if(max>=3)h+=`<div class="card" style="margin-top:8px">💡 Tu día más cargado es ${maxd===0?'hoy':maxd===1?'mañana':fdate(dias[maxd])} (${max} actividades). Si puedes, adelanta algo.</div>`;
+if(mas)h+=`<div style="font-size:12px;color:var(--mut);margin-top:8px">Además hay ${mas} pendiente${mas>1?'s':''} para después de esta semana.</div>`}
+$('#sem-out').innerHTML=h}
+
 (async()=>{if(!user||!user.username){render();return}$('#app').innerHTML='<div class="empty">Cargando…</div>';try{await load();render()}catch(e){$('#app').innerHTML='<div class="card empty">No se pudo conectar con la base de datos.</div>'}})();
 </script>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});</script>
